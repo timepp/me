@@ -1,0 +1,1 @@
+export const assets = undefined // this file will be replaced by the build script
