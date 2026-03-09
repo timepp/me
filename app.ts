@@ -7,7 +7,7 @@ const release = args.release || !import.meta.url.startsWith('file://')
 const memoryAssets = release? (await import('./release-assets.ts')).assets : {}
 
 await denoUI.startDenoUI({
-    appName: 'dui-sample-app',
+    appName: 'My Environment',
     frontendRoot: 'frontend',
     appMode: true,
     apiImpl,
