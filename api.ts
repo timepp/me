@@ -11,9 +11,31 @@ export type NetworkInfo = {
     mac: string;
 }
 
+export type PortInfo = {
+    isOpen: boolean;
+    processes: Array<{
+        pid: number;
+        name: string;
+        protocol: string;
+        state: string;
+    }>;
+}
+
 export const api = {
     getNetworkInfo: async function (name: string) {
         return await callAPI(arguments) as NetworkInfo[]
+    },
+    runCommandAndCaptureOutput: async function (command: string, params: string[]) {
+        return await callAPI(arguments) as string
+    },
+    runCommandInTerminal: async function (command: string, params: string[]) {
+        return await callAPI(arguments) as string
+    },
+    getLocalPortInfo: async function (port: number) {
+        return await callAPI(arguments) as PortInfo
+    },
+    shellRun: async function (command: string) {
+        return await callAPI(arguments) as string
     }
 }
 

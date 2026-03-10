@@ -2,12 +2,14 @@
   "version": "5",
   "specifiers": {
     "jsr:@lambdalisue/systemopen@1.0.0": "1.0.0",
+    "jsr:@std/cli@0.224.7": "0.224.7",
     "jsr:@std/encoding@1.0.1": "1.0.1",
     "jsr:@std/fs@1.0.5": "1.0.5",
     "jsr:@std/media-types@1.0.1": "1.0.1",
     "jsr:@std/path@1.0.0": "1.0.0",
     "jsr:@std/path@1.0.7": "1.0.7",
     "jsr:@std/path@^1.0.7": "1.0.7",
+    "jsr:@timepp/dui@0.1.11": "0.1.11",
     "jsr:@timepp/dui@0.1.13": "0.1.13",
     "npm:vite@5.3.3": "5.3.3",
     "npm:vite@6.3.5": "6.3.5_picomatch@4.0.3"
@@ -15,6 +17,9 @@
   "jsr": {
     "@lambdalisue/systemopen@1.0.0": {
       "integrity": "7d9f8a903476fd936a8f7a4f0c1a9d2e974f759129cca581d0ea9a57caf3a40b"
+    },
+    "@std/cli@0.224.7": {
+      "integrity": "654ca6477518e5e3a0d3fabafb2789e92b8c0febf1a1d24ba4b567aba94b5977"
     },
     "@std/encoding@1.0.1": {
       "integrity": "5955c6c542ebb4ce6587c3b548dc71e07a6c27614f1976d1d3887b1196cf4e65"
@@ -33,6 +38,19 @@
     },
     "@std/path@1.0.7": {
       "integrity": "76a689e07f0e15dcc6002ec39d0866797e7156629212b28f27179b8a5c3b33a1"
+    },
+    "@timepp/dui@0.1.11": {
+      "integrity": "e3b502dfdfd2714f8f2c016297e60b5348d0d3bef82d0937d5b73222f2ee1754",
+      "dependencies": [
+        "jsr:@lambdalisue/systemopen",
+        "jsr:@std/encoding",
+        "jsr:@std/fs",
+        "jsr:@std/media-types",
+        "jsr:@std/path@1.0.0",
+        "jsr:@std/path@1.0.7",
+        "npm:vite@5.3.3",
+        "npm:vite@6.3.5"
+      ]
     },
     "@timepp/dui@0.1.13": {
       "integrity": "bdb25e1ef57c29554a42687d7c1acf152f74a7fb2719e2ae39172a644a17e13b",

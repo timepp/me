@@ -9,7 +9,7 @@ const memoryAssets = release? (await import('./release-assets.ts')).assets : {}
 await denoUI.startDenoUI({
     appName: 'My Environment',
     frontendRoot: 'frontend',
-    appMode: true,
+    appMode: false,
     apiImpl,
     release,
     memoryAssets
