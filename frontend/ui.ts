@@ -33,7 +33,6 @@ function bookmark(name: string, url: string, description?: string): Command {
 const commands = [
     {
         name: 'Launch SSH proxy',
-        tag: [] as string[],
         description: 'Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng',
         run: async function() {
             const result = await api.runCommandInTerminal('ssh', [
@@ -42,7 +41,8 @@ const commands = [
                 '-D', '1080', 
                 'timepp@52.184.82.147'
             ])
-            return result
+            console.log(result)
+            // check port within 30 seconds
         },
         status: async function() {
             const portInfo = await api.getLocalPortInfo(1080)
@@ -73,7 +73,7 @@ function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') 
         } else if (status === 'no') {
             elem.textContent = '❌'
         } else {
-            elem.textContent = '❓'
+            elem.textContent = ''
         }
     }
 }
@@ -81,27 +81,55 @@ function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') 
 async function main() {
     // wait for websocket connection ready
     await connectWebSocket()
+
+    const statusElements: Record<string, HTMLElement> = {}
+    const getElement = (item: Command) => statusElements[item.name]
+    const setElement = (item: Command, element: HTMLElement) => statusElements[item.name] = element
     document.body.append(uu.visualizeArray(commands, {
         columnProperties: {
             status: {
-                formater: function(command) {
-                    const element = document.createElement('span')
+                formater: function(command, item) {
+                    let element = getElement(item)
+                    if (element) {
+                        return element
+                    }
+                    element = uu.createElement(null, 'span', [], 'N/A')
+                    setElement(item, element)
                     if (command) {
                         command().then((status: CommandStatus) => {
                             updateStatus(element, status)
                         })
-                    } else {
-                        element.textContent = 'N/A'
                     }
                     return element
                 }
             }
         },
-        itemActions: {
-            'Run': async function(command) {
-                const result = await command.run()
-                uu.showDialog('Run Result', result)
+        itemActions: item => {
+            const actions: uu.ItemActions = {
+                'Run': async function(item: Command) {
+                    const result = await item.run()
+                    updateStatus(getElement(item), 'running')
+                    // we need to keep check item status until it's ok
+                    for (let i = 0; i < 10; i++) {
+                        await new Promise(r => setTimeout(r, 1000))
+                        const status = await item.status?.()
+                        if (status === 'yes') {
+                            updateStatus(getElement(item), 'yes')
+                            return
+                        }
+                    }
+                    // if after retrying for a while, the status is still not yes, we set it to no
+                    updateStatus(getElement(item), 'no')
+                },
             }
+            if (item.status) {
+                actions['Refresh Status'] = async function(item: Command) {
+                    updateStatus(getElement(item), 'unknown')
+                    const status = await item.status!()
+                    updateStatus(getElement(item), status)
+                }
+            }
+            return actions
         },
         hideUniformColumns: false
     }))
