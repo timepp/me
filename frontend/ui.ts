@@ -11,6 +11,7 @@ Open Test Tenant T091
 Request repo permissions in 1ES
 https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-colinay/engineering-tenant/1es-permissions-service/perms
 
+
 Inspect Graph Request
 https://aka.ms/graphlogs
 
@@ -22,12 +23,38 @@ https://cesplayground.azurewebsites.net/
 
 Office Graph Architecture
 https://microsoft-my.sharepoint-df.com/:p:/p/simonhul/cQq2VwqJVaZbQawqNzL9uyHZEgUCajSUiP_LrY0G4chT3-4l3Q
-#Substrate, #Architecture
+#Substrate,Architecture
+
+LLM dashboard
+https://llm-dash.azurewebsites.net/model_insight
+#LLM,Dashboard
+
+Arch review process
+https://teams.microsoft.com/l/message/19:6987ef3516d94c1e862c6ecd75100f25@thread.skype/1775423220114?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=7cc2bcc3-969b-404a-9de4-6cd1d539eb11&parentMessageId=1775423220114&teamName=Calling%2FMeeting%2FDevices&channelName=Announcements&createdTime=1775423220114
+
+943 admin center
+https://admin.microsoft.com/?login_hint=admin@M365CPI32306943.onmicrosoft.com
+@Profile 4
+
+T091 admin center
+https://admin.microsoft.com/?login_hint=admin@M365MCP81612091.onmicrosoft.com
+@Profile 3
+
 `
 
 function openUrl(url: string) {
     return async function() {
         const result = await api.shellRun(url)
+        return result
+    }
+}
+
+function openUrlByChrome(url: string, profile: string) {
+    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    return async function() {
+        const result = await api.runCommand(chromePath, [
+            `--profile-directory=${profile}`, 
+            url])
         return result
     }
 }
@@ -43,13 +70,13 @@ type Command = {
     status?: () => Promise<CommandStatus>
 }
 
-function bookmark(name: string, url: string, description?: string, tags: string[] = []) {
+function bookmark(name: string, url: string, description?: string, profile?: string, tags: string[] = []) {
     return {
         name,
         tag: ['bookmark', ...tags],
         description,
         url,
-        run: openUrl(url),
+        run: profile ? openUrlByChrome(url, profile) : openUrl(url),
     }
 }
 
@@ -60,15 +87,31 @@ function parseBookmarkFromString(str: string) {
     return paras
         .filter(part => part.length > 0)
         .map(part => {
+            let name, url, profile, tags: string[] = [], description = ''
             const partLines = part.split('\n')
-            if (partLines.length >= 2) {
-                const [name, url, ...rest] = partLines
-                const tagsMatch = rest[0]?.match(/#\w+/g)
-                const tags = tagsMatch ? tagsMatch.map(t => t.substring(1)) : []
-                const descStart = tagsMatch ? 1 : 0
-                const description = rest.slice(descStart).join('\n').trim() || undefined
-                return bookmark(name, url, description, tags)
+            for (const [i, line] of partLines.entries()) {
+                if (line.startsWith('#')) {
+                    // # for tags
+                    tags = line.substring(1).split(',').map(t => t.trim())
+                } else if (line.startsWith('@')) {
+                    // @ for profile
+                    profile = line.substring(1).trim()
+                } else if (line.startsWith('http')) {
+                    // url line
+                    url = line.trim()
+                } else {
+                    // other lines are considered as name and description
+                    if (!name) {
+                        name = line.trim()
+                    } else {
+                        description += line.trim() + '\n'
+                    }
+                }
             }
+            if (name && url) {
+                return bookmark(name, url, description.trim(), profile, tags)
+            }
+
             return null
         })
         .filter((cmd) => cmd !== null)
@@ -96,6 +139,24 @@ const commands = [
             } else {
                 return 'no'
             }
+        }
+    },
+    {
+        name: 'Edit with Code',
+        tag: ['editors'],
+        description: 'Open current folder in VS Code',
+        run: async function() {
+            const result = await api.editMySelfWithCode()
+            return result
+        },
+    },
+    {
+        name: "拦截postMessage消息",
+        tag: ['debugging'],
+        description: "const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);",
+        run: async function() {
+            const code = `const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);`
+            uu.showInDialog('拦截postMessage消息', `在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试<br><br><code>${code}</code>`)
         }
     },
     ...parseBookmarkFromString(allBookmarks)

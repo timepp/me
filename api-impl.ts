@@ -2,9 +2,27 @@
 import { BackendAPI } from './api.ts'
 
 export const apiImpl: BackendAPI = {
+    editMySelfWithCode: async function () {
+        const myPath = new URL(import.meta.url).pathname
+        // /D:/src/me/api-impl.ts => D:\src\me
+        const dir = myPath.substring(1, myPath.lastIndexOf('/')).replace(/\//g, '\\')
+        console.log('Opening current file in VS Code:', dir)
+        const cmd = new Deno.Command('code.cmd', {
+            args: [dir],
+        })
+        cmd.spawn()
+        return `Opened ${dir} in VS Code.`
+    },
     getNetworkInfo: async function (name: string) {
         const ni = Deno.networkInterfaces()
         return ni.filter(n => !name || n.name === name)
+    },
+    runCommand: async function(command: string, params: string[]) {
+        const cmd = new Deno.Command(command, {
+            args: params,
+        })
+        cmd.spawn()
+        return `Command "${command} ${params.join(' ')}" executed.`
     },
     runCommandInTerminal: async function (command: string, params: string[]) {
         // Use 'start' to open a new window, then 'cmd /k' to keep it open after command completes

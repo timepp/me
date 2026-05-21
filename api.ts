@@ -28,6 +28,9 @@ export const api = {
     runCommandAndCaptureOutput: async function (command: string, params: string[]) {
         return await callAPI(arguments) as string
     },
+    runCommand: async function(command: string, params: string[]) {
+        return await callAPI(arguments) as string
+    },
     runCommandInTerminal: async function (command: string, params: string[]) {
         return await callAPI(arguments) as string
     },
@@ -35,6 +38,9 @@ export const api = {
         return await callAPI(arguments) as PortInfo
     },
     shellRun: async function (command: string) {
+        return await callAPI(arguments) as string
+    },
+    editMySelfWithCode: async function () {
         return await callAPI(arguments) as string
     }
 }

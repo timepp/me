@@ -11,6 +11,7 @@
     "jsr:@std/path@^1.0.7": "1.0.7",
     "jsr:@timepp/dui@0.1.11": "0.1.11",
     "jsr:@timepp/dui@0.1.13": "0.1.13",
+    "jsr:@timepp/dui@0.1.14": "0.1.14",
     "npm:vite@5.3.3": "5.3.3",
     "npm:vite@6.3.5": "6.3.5_picomatch@4.0.3"
   },
@@ -54,6 +55,19 @@
     },
     "@timepp/dui@0.1.13": {
       "integrity": "bdb25e1ef57c29554a42687d7c1acf152f74a7fb2719e2ae39172a644a17e13b",
+      "dependencies": [
+        "jsr:@lambdalisue/systemopen",
+        "jsr:@std/encoding",
+        "jsr:@std/fs",
+        "jsr:@std/media-types",
+        "jsr:@std/path@1.0.0",
+        "jsr:@std/path@1.0.7",
+        "npm:vite@5.3.3",
+        "npm:vite@6.3.5"
+      ]
+    },
+    "@timepp/dui@0.1.14": {
+      "integrity": "a12091418f253a22681526986fa0b862e202cf1645c10f24243e55d90ed80296",
       "dependencies": [
         "jsr:@lambdalisue/systemopen",
         "jsr:@std/encoding",
