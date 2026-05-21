@@ -120,7 +120,6 @@ function parseBookmarkFromString(str: string) {
 const commands = [
     {
         name: 'Launch SSH proxy',
-        tag: [] as string[],
         description: 'Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng',
         run: async function() {
             const result = await api.runCommandInTerminal('ssh', [
@@ -129,7 +128,8 @@ const commands = [
                 '-D', '1080', 
                 'timepp@52.184.82.147'
             ])
-            return result
+            console.log(result)
+            // check port within 30 seconds
         },
         status: async function() {
             const portInfo = await api.getLocalPortInfo(1080)
@@ -160,7 +160,7 @@ const commands = [
         }
     },
     ...parseBookmarkFromString(allBookmarks)
-]
+] as Command[]
 
 function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') {
     console.log('Updating status for command:', elem, status)
@@ -174,7 +174,7 @@ function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') 
         } else if (status === 'no') {
             elem.textContent = '❌'
         } else {
-            elem.textContent = '❓'
+            elem.textContent = ''
         }
     }
 }
@@ -182,35 +182,71 @@ function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') 
 async function main() {
     // wait for websocket connection ready
     await connectWebSocket()
+    uu.enableFontAwesome()
+
+    const statusElements: Record<string, HTMLElement> = {}
+    const getElement = (item: Command) => statusElements[item.name]
+    const setElement = (item: Command, element: HTMLElement) => statusElements[item.name] = element
     document.body.append(uu.visualizeArray(commands, {
-        columnProperties: {
-            status: {
-                formater: function(command) {
-                    const element = document.createElement('span')
-                    if (command) {
-                        command().then((status: CommandStatus) => {
-                            updateStatus(element, status)
-                        })
-                    } else {
-                        element.textContent = 'N/A'
+        renderOption: {
+            propOptions: {
+                status: {
+                    formatter: function(item, prop, index) {
+                        let element = getElement(item)
+                        if (element) {
+                            return element
+                        }
+                        element = uu.createElement(null, 'span', [], 'N/A')
+                        setElement(item, element)
+                        if (item.status) {
+                            item.status().then((status: CommandStatus) => {
+                                updateStatus(element, status)
+                            })
+                        }
+                        return element
                     }
-                    return element
                 }
             }
         },
-        itemActions: {
-            'Run': async function(command: Command) {
-                const result = await command.run()
-                console.log('Command result:', result)
+        itemActions: item => {
+            const actions: uu.ItemActions = {
+                'Run': async function(item: Command) {
+                    const result = await item.run()
+                    updateStatus(getElement(item), 'running')
+                    // we need to keep check item status until it's ok
+                    for (let i = 0; i < 10; i++) {
+                        await new Promise(r => setTimeout(r, 1000))
+                        const status = await item.status?.()
+                        if (status === 'yes') {
+                            updateStatus(getElement(item), 'yes')
+                            return
+                        }
+                    }
+                    // if after retrying for a while, the status is still not yes, we set it to no
+                    updateStatus(getElement(item), 'no')
+                },
             }
+            if (item.status) {
+                actions['Refresh Status'] = async function(item: Command) {
+                    updateStatus(getElement(item), 'unknown')
+                    const status = await item.status!()
+                    updateStatus(getElement(item), status)
+                }
+            }
+            return actions
         },
-        onRowClick: async (item: Command, dataIndex: number) => {
-            console.log('Row clicked:', item, dataIndex)
-            const result = await uu.callAsyncFunctionWithProgress(() => item.run(), 'Running command...')
-            console.log('Command result:', result)
-        },
-
-        hideUniformColumns: false
+        hideUniformProps: false,
+        rawIndexProp: '#',
+        stateKey: 'MyEnv',
+        wallRenderOption: {
+            imageUrl: (item, index) => {
+                const images = [
+                    'https://th.bing.com/th/id/OIP.C-0rSiRmGRZnYUS0W_irLgAAAA?&rs=1&pid=ImgDetMain&o=7&rm=3',
+                    'https://64.media.tumblr.com/90696478bc0bd478eb8a42af40f1c8c6/b168c0193a7aeef4-46/s1280x1920/e92c046d3c9d755d56e53290b029d719d4005f0c.jpg'
+                ]
+                return images[index % images.length]
+            }
+        }
     }))
 }
 
