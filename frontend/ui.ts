@@ -126,6 +126,21 @@ async function main() {
     const statusElements: Record<string, HTMLElement> = {}
     const getElement = (item: Command) => statusElements[item.name]
     const setElement = (item: Command, element: HTMLElement) => statusElements[item.name] = element
+    const run = async (item: Command) => {
+        const result = await item.run()
+        updateStatus(getElement(item), 'running')
+        // we need to keep check item status until it's ok
+        for (let i = 0; i < 10; i++) {
+            await new Promise(r => setTimeout(r, 1000))
+            const status = await item.status?.()
+            if (status === 'yes') {
+                updateStatus(getElement(item), 'yes')
+                return
+            }
+        }
+        // if after retrying for a while, the status is still not yes, we set it to no
+        updateStatus(getElement(item), 'no')
+    }
     document.body.append(uu.visualizeArray(commands, {
         renderOption: {
             propOptions: {
@@ -145,24 +160,16 @@ async function main() {
                         return element
                     }
                 }
+            },
+            onItemClick: function(item, index) {
+                run(item)
+                return true
             }
         },
         itemActions: item => {
             const actions: uu.ItemActions = {
                 'Run': async function(item: Command) {
-                    const result = await item.run()
-                    updateStatus(getElement(item), 'running')
-                    // we need to keep check item status until it's ok
-                    for (let i = 0; i < 10; i++) {
-                        await new Promise(r => setTimeout(r, 1000))
-                        const status = await item.status?.()
-                        if (status === 'yes') {
-                            updateStatus(getElement(item), 'yes')
-                            return
-                        }
-                    }
-                    // if after retrying for a while, the status is still not yes, we set it to no
-                    updateStatus(getElement(item), 'no')
+                    await run(item)
                 },
             }
             if (item.status) {
