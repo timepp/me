@@ -40,6 +40,12 @@ export const api = {
     shellRun: async function (command: string) {
         return await callAPI(arguments) as string
     },
+    getMyselfDir: async function() {
+        return await callAPI(arguments) as string
+    },
+    openDirWithCode: async function(dir: string) {
+        return await callAPI(arguments) as string
+    },
     editMySelfWithCode: async function () {
         return await callAPI(arguments) as string
     }

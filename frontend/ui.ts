@@ -11,7 +11,6 @@ Open Test Tenant T091
 Request repo permissions in 1ES
 https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-colinay/engineering-tenant/1es-permissions-service/perms
 
-
 Inspect Graph Request
 https://aka.ms/graphlogs
 
@@ -39,6 +38,16 @@ https://admin.microsoft.com/?login_hint=admin@M365CPI32306943.onmicrosoft.com
 T091 admin center
 https://admin.microsoft.com/?login_hint=admin@M365MCP81612091.onmicrosoft.com
 @Profile 3
+
+Compliance Deck
+https://microsoft-my.sharepoint-df.com/:p:/p/junhuitong/cQptgGBJtdvrTrsCUxGDkQfzEgUCxy_QibHmOLKWqV0lMsnGCw
+#Compliance,Working
+
+Compliance Doc
+https://microsoft-my.sharepoint-df.com/:w:/p/junhuitong/cQrqW4FCU2BtQ4HSLCGNca1EEgUCY6duMDJZDe0Sg__Bkz0WVw
+#Compliance,Working
+
+
 
 `
 
@@ -77,7 +86,19 @@ function bookmark(name: string, url: string, description?: string, profile?: str
         description,
         url,
         run: profile ? openUrlByChrome(url, profile) : openUrl(url),
-    }
+    } as Command
+}
+
+function codeLink(dir: string) {
+    return {
+        name: `Open '${dir}'`,
+        tag: ['code'],
+        description: `Open ${dir} in VS Code`,
+        run: async function() {
+            const result = await api.openDirWithCode(dir)
+            return result
+        }
+    } as Command
 }
 
 function parseBookmarkFromString(str: string) {
@@ -146,7 +167,9 @@ const commands = [
         tag: ['editors'],
         description: 'Open current folder in VS Code',
         run: async function() {
-            const result = await api.editMySelfWithCode()
+            //const result = await api.editMySelfWithCode()
+            const dir = await api.getMyselfDir()
+            const result = await api.openDirWithCode(dir)
             return result
         },
     },
@@ -159,7 +182,8 @@ const commands = [
             uu.showInDialog('拦截postMessage消息', `在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试<br><br><code>${code}</code>`)
         }
     },
-    ...parseBookmarkFromString(allBookmarks)
+    ...parseBookmarkFromString(allBookmarks),
+    codeLink('%OneDrive%\\Arch'),
 ] as Command[]
 
 function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') {
@@ -189,20 +213,23 @@ async function main() {
     const setElement = (item: Command, element: HTMLElement) => statusElements[item.name] = element
     const run = async (item: Command) => {
         const result = await item.run()
-        updateStatus(getElement(item), 'running')
-        // we need to keep check item status until it's ok
-        for (let i = 0; i < 10; i++) {
-            await new Promise(r => setTimeout(r, 1000))
-            const status = await item.status?.()
-            if (status === 'yes') {
-                updateStatus(getElement(item), 'yes')
-                return
+        if (item.status) {
+            updateStatus(getElement(item), 'running')
+            // we need to keep check item status until it's ok
+            for (let i = 0; i < 10; i++) {
+                await new Promise(r => setTimeout(r, 1000))
+                const status = await item.status?.()
+                if (status === 'yes') {
+                    updateStatus(getElement(item), 'yes')
+                    return
+                }
             }
+            // if after retrying for a while, the status is still not yes, we set it to no
+            updateStatus(getElement(item), 'no')
         }
-        // if after retrying for a while, the status is still not yes, we set it to no
-        updateStatus(getElement(item), 'no')
     }
     document.body.append(uu.visualizeArray(commands, {
+        renderStyles: ['table', 'tile'],
         renderOption: {
             propOptions: {
                 status: {

@@ -2,6 +2,24 @@
 import { BackendAPI } from './api.ts'
 
 export const apiImpl: BackendAPI = {
+    getMyselfDir: async function () {
+        const myPath = new URL(import.meta.url).pathname
+        // /D:/src/me/api-impl.ts => D:\src\me
+        const dir = myPath.substring(1, myPath.lastIndexOf('/')).replace(/\//g, '\\')
+        return dir
+    },
+    openDirWithCode: async function (dir: string) {
+        console.log('Opening directory in VS Code:', dir)
+        if (!dir.includes(':') && !dir.includes('%')) {
+            dir = 'D:\\src\\' + dir
+        }
+        console.log('Resolved directory:', dir)
+        const cmd = new Deno.Command('code.cmd', {
+            args: [dir],
+        })
+        cmd.spawn()
+        return `Opened ${dir} in VS Code.`
+    },
     editMySelfWithCode: async function () {
         const myPath = new URL(import.meta.url).pathname
         // /D:/src/me/api-impl.ts => D:\src\me

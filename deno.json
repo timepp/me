@@ -2,5 +2,6 @@
   "name": "@timepp/me",
   "version": "0.1.0",
   "license": "MIT",
-  "exports": "./app.ts"
+  "exports": "./app.ts",
+  "minimumDependencyAge": 0
 }
