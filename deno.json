@@ -3,5 +3,19 @@
   "version": "0.1.0",
   "license": "MIT",
   "exports": "./app.ts",
-  "minimumDependencyAge": 0
+  "imports": {
+    "@timepp/dui": "jsr:@timepp/dui@0.3.7"
+  },
+  "tasks": {
+    "install:uu": "deno install --config uu/deno.json --node-modules-dir=auto --no-lock"
+  },
+  "minimumDependencyAge": 0,
+  "compilerOptions": {
+    "lib": [
+      "deno.window",
+      "deno.unstable",
+      "node",
+      "dom"
+    ]
+  }
 }

@@ -1,5 +1,4 @@
-// deno-lint-ignore-file no-unused-vars
-import { callAPI } from './frontend/websocket-client.ts'
+import { createClient } from "@timepp/dui/client"
 
 export type NetworkInfo = {
     name: string;
@@ -21,35 +20,16 @@ export type PortInfo = {
     }>;
 }
 
-export const api = {
-    getNetworkInfo: async function (name: string) {
-        return await callAPI(arguments) as NetworkInfo[]
-    },
-    runCommandAndCaptureOutput: async function (command: string, params: string[]) {
-        return await callAPI(arguments) as string
-    },
-    runCommand: async function(command: string, params: string[]) {
-        return await callAPI(arguments) as string
-    },
-    runCommandInTerminal: async function (command: string, params: string[]) {
-        return await callAPI(arguments) as string
-    },
-    getLocalPortInfo: async function (port: number) {
-        return await callAPI(arguments) as PortInfo
-    },
-    shellRun: async function (command: string) {
-        return await callAPI(arguments) as string
-    },
-    getMyselfDir: async function() {
-        return await callAPI(arguments) as string
-    },
-    openDirWithCode: async function(dir: string) {
-        return await callAPI(arguments) as string
-    },
-    editMySelfWithCode: async function () {
-        return await callAPI(arguments) as string
-    }
+export interface BackendAPI {
+    getNetworkInfo(name: string): Promise<NetworkInfo[]>
+    runCommand(command: string, params: string[]): Promise<string>
+    runCommandInTerminal(command: string, params: string[]): Promise<string>
+    shellRun(command: string): Promise<string>
+    runCommandAndCaptureOutput(command: string, params: string[]): Promise<string>
+    getLocalPortInfo(port: number): Promise<PortInfo>
+    getMyselfDir(): Promise<string>
+    openDirWithCode(dir: string): Promise<string>
+    editMySelfWithCode(): Promise<string>
 }
 
-export type BackendAPI = typeof api
-
+export const api = createClient<BackendAPI>()

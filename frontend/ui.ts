@@ -1,15 +1,13 @@
 import {api} from '../api.ts'
 import * as uu from './uu.ts'
-import { connectWebSocket } from './websocket-client.ts'
-import * as tagger from './tagger.ts'
 
 const allBookmarks = `
-CDX: T091
-https://cdx.transform.microsoft.com/dashboard/tenant-details/efc33fab-d188-4c61-bb40-661f3c9fb529
-Open Test Tenant T091
+CDX: Dashboard
+https://cdx.transform.microsoft.com/dashboard?tab=mytenants
+Open Test Tenants
 
 Request repo permissions in 1ES
-https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-colinay/engineering-tenant/1es-permissions-service/perms
+https://eng.ms/docs/initiatives/1es-permissions-service/perms/office/oe
 
 Inspect Graph Request
 https://aka.ms/graphlogs
@@ -39,6 +37,10 @@ T091 admin center
 https://admin.microsoft.com/?login_hint=admin@M365MCP81612091.onmicrosoft.com
 @Profile 3
 
+486 admin center
+https://admin.microsoft.com/?login_hint=admin@M365CPI00209486.onmicrosoft.com
+@Profile 2
+
 Compliance Deck
 https://microsoft-my.sharepoint-df.com/:p:/p/junhuitong/cQptgGBJtdvrTrsCUxGDkQfzEgUCxy_QibHmOLKWqV0lMsnGCw
 #Compliance,Working
@@ -47,7 +49,21 @@ Compliance Doc
 https://microsoft-my.sharepoint-df.com/:w:/p/junhuitong/cQrqW4FCU2BtQ4HSLCGNca1EEgUCY6duMDJZDe0Sg__Bkz0WVw
 #Compliance,Working
 
+FSL Tech Deck
+https://microsoft.sharepoint-df.com/:p:/s/M365CoreSearchExtensibilityTeam/cQrgokjJnLdUQ723A7CvYxpsEgUCOb7oDIyNNIM_BA-XAHCzkA?isSPOFile=1&ovuser=72f988bf-86f1-41af-91ab-2d7cd011db47%2Cjunhuitong%40microsoft.com&wdExp=TEAMS-TREATMENT&web=1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiI0OS8yNjA3MTYxNjAxMSJ9
+#Substrate,Knowledge
 
+Arch Dashboard
+https://domoreexp.visualstudio.com/MSTeams/_dashboards/dashboard/0bb414f5-32ba-4056-9563-a7554a90c757
+
+Arch Query
+https://domoreexp.visualstudio.com/MSTeams/_queries/query/c84834ef-601b-4cf8-b6e6-6c8c4caad9ec/
+
+Arch Template
+https://domoreexp.visualstudio.com/MSTeams/_workitems/edit/5598914
+
+M365 Monitoring Wiki
+https://o365exchange.visualstudio.com/O365%20Core/_wiki/wikis/M365%20Passive%20Monitoring/490289/sop-access-passive-monitoring-kusto-databases
 
 `
 
@@ -71,25 +87,48 @@ function openUrlByChrome(url: string, profile: string) {
 // Whether current device status align with the expected status after the command is executed.
 type CommandStatus = 'unknown' | 'yes' | 'no'
 
-type Command = {
-    name: string,
-    tag?: string[],
-    description?: string,
-    run: () => Promise<string>,
-    status?: () => Promise<CommandStatus>
+interface Command {
+    name: string
+    tag?: string[]
+    description?: string
+    run(): Promise<string | void>
+    status?(): Promise<CommandStatus>
 }
 
-function bookmark(name: string, url: string, description?: string, profile?: string, tags: string[] = []) {
+interface BookmarkCommand extends Command {
+    url: string
+}
+
+interface CompoundCommand extends Command {
+    subCommands: Command[]
+}
+
+function compoundCommand(name: string, subCommands: Command[], description?: string): CompoundCommand {
+    return {
+        name,
+        tag: ['compound'],
+        description,
+        subCommands,
+        run: async function() {
+            for (const cmd of subCommands) {
+                const result = await cmd.run()
+                console.log(`Command ${cmd.name} executed with result:`, result)
+            }
+        }
+    }
+}
+
+function bookmark(name: string, url: string, description?: string, profile?: string, tags: string[] = []): BookmarkCommand {
     return {
         name,
         tag: ['bookmark', ...tags],
         description,
         url,
         run: profile ? openUrlByChrome(url, profile) : openUrl(url),
-    } as Command
+    }
 }
 
-function codeLink(dir: string) {
+function codeLink(dir: string): Command {
     return {
         name: `Open '${dir}'`,
         tag: ['code'],
@@ -98,7 +137,7 @@ function codeLink(dir: string) {
             const result = await api.openDirWithCode(dir)
             return result
         }
-    } as Command
+    }
 }
 
 function parseBookmarkFromString(str: string) {
@@ -138,53 +177,64 @@ function parseBookmarkFromString(str: string) {
         .filter((cmd) => cmd !== null)
 }
 
-const commands = [
-    {
-        name: 'Launch SSH proxy',
-        description: 'Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng',
-        run: async function() {
-            const result = await api.runCommandInTerminal('ssh', [
-                '-v',
-                '-i', 'c:\\cloud\\INFO\\cert\\azure_tosexng_proxy_key.pem',
-                '-D', '1080', 
-                'timepp@52.184.82.147'
-            ])
-            console.log(result)
-            // check port within 30 seconds
-        },
-        status: async function() {
-            const portInfo = await api.getLocalPortInfo(1080)
-            console.log(`got port info:`, portInfo)
-            if (portInfo.isOpen) {
-                return 'yes'
-            } else {
-                return 'no'
+async function getCommands()
+{
+    const myDir = await api.getMyselfDir()
+    const bookmarks = parseBookmarkFromString(allBookmarks)
+    const commands = [
+        {
+            name: 'Launch SSH proxy',
+            description: 'Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng',
+            run: async function () {
+                const result = await api.runCommandInTerminal('ssh', [
+                    '-v',
+                    '-i', 'c:\\cloud\\INFO\\cert\\azure_tosexng_proxy_key.pem',
+                    '-D', '1080',
+                    'timepp@52.184.82.147'
+                ])
+                console.log(result)
+                // check port within 30 seconds
+            },
+            status: async function () {
+                const portInfo = await api.getLocalPortInfo(1080)
+                console.log(`got port info:`, portInfo)
+                if (portInfo.isOpen) {
+                    return 'yes'
+                } else {
+                    return 'no'
+                }
             }
-        }
-    },
-    {
-        name: 'Edit with Code',
-        tag: ['editors'],
-        description: 'Open current folder in VS Code',
-        run: async function() {
-            //const result = await api.editMySelfWithCode()
-            const dir = await api.getMyselfDir()
-            const result = await api.openDirWithCode(dir)
-            return result
         },
-    },
-    {
-        name: "拦截postMessage消息",
-        tag: ['debugging'],
-        description: "const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);",
-        run: async function() {
-            const code = `const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);`
-            uu.showInDialog('拦截postMessage消息', `在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试<br><br><code>${code}</code>`)
+        {
+            name: "拦截postMessage消息",
+            tag: ['debugging'],
+            description: "const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);",
+            run: async function () {
+                const code = `const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);`
+                uu.showInDialog('拦截postMessage消息', `在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试<br><br><code>${code}</code>`)
+            }
+        },
+        ...bookmarks,
+        codeLink('%OneDrive%\\Arch'),
+        codeLink(myDir),
+        codeLink('%OneDriveConsumer%')
+    ] satisfies Command[]
+    const getCommand = (name: string): Command => {
+        const command = commands.find(cmd => cmd.name === name)
+        if (!command) {
+            throw new Error(`Command not found: ${name}`)
         }
-    },
-    ...parseBookmarkFromString(allBookmarks),
-    codeLink('%OneDrive%\\Arch'),
-] as Command[]
+        return command
+    }
+    const archSpace = compoundCommand('Arch Space', [
+        getCommand('Arch Dashboard'),
+        getCommand('Arch Query'),
+        getCommand('Arch Template')
+    ], 'Open Arch Spaces')
+    commands.push(archSpace)
+    return commands
+}
+
 
 function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') {
     console.log('Updating status for command:', elem, status)
@@ -205,8 +255,9 @@ function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') 
 
 async function main() {
     // wait for websocket connection ready
-    await connectWebSocket()
     uu.enableFontAwesome()
+
+    const commands = await getCommands()
 
     const statusElements: Record<string, HTMLElement> = {}
     const getElement = (item: Command) => statusElements[item.name]
@@ -249,7 +300,7 @@ async function main() {
                     }
                 }
             },
-            onItemClick: function(item, index) {
+            onItemClick: async function(item, index) {
                 run(item)
                 return true
             }
@@ -271,16 +322,7 @@ async function main() {
         },
         hideUniformProps: false,
         rawIndexProp: '#',
-        stateKey: 'MyEnv',
-        wallRenderOption: {
-            imageUrl: (item, index) => {
-                const images = [
-                    'https://th.bing.com/th/id/OIP.C-0rSiRmGRZnYUS0W_irLgAAAA?&rs=1&pid=ImgDetMain&o=7&rm=3',
-                    'https://64.media.tumblr.com/90696478bc0bd478eb8a42af40f1c8c6/b168c0193a7aeef4-46/s1280x1920/e92c046d3c9d755d56e53290b029d719d4005f0c.jpg'
-                ]
-                return images[index % images.length]
-            }
-        }
+        stateKey: 'MyEnv'
     }))
 }
 

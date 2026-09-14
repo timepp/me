@@ -1,15 +1,14 @@
 import { parseArgs } from "jsr:@std/cli@0.224.7/parse-args"
 import { apiImpl } from './api-impl.ts'
-import * as denoUI from "jsr:@timepp/dui@0.1.16"
+import { startDenoUI } from "@timepp/dui"
 
 const args = parseArgs(Deno.args)
 const release = args.release || !import.meta.url.startsWith('file://')
 const memoryAssets = release? (await import('./release-assets.ts')).assets : {}
-await denoUI.startDenoUI({
+await startDenoUI({
     appName: 'My Environment',
-    frontendRoot: 'frontend',
+    ui: 'frontend/index.html',
     appMode: args.appMode,
-    apiImpl,
-    release,
+    api: apiImpl,
     memoryAssets
 })

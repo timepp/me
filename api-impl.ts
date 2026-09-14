@@ -1,5 +1,5 @@
 // deno-lint-ignore-file require-await
-import { BackendAPI } from './api.ts'
+import type { BackendAPI } from './api.ts'
 
 export const apiImpl: BackendAPI = {
     getMyselfDir: async function () {
@@ -10,15 +10,16 @@ export const apiImpl: BackendAPI = {
     },
     openDirWithCode: async function (dir: string) {
         console.log('Opening directory in VS Code:', dir)
-        if (!dir.includes(':') && !dir.includes('%')) {
-            dir = 'D:\\src\\' + dir
-        }
-        console.log('Resolved directory:', dir)
+        const resolvedDir = dir.replace(
+            /%([^%]+)%/g,
+            (_, name) => Deno.env.get(name) ?? `%${name}%`,
+        )
+        console.log('Resolved directory:', resolvedDir)
         const cmd = new Deno.Command('code.cmd', {
-            args: [dir],
+            args: [resolvedDir],
         })
         cmd.spawn()
-        return `Opened ${dir} in VS Code.`
+        return `Opened ${resolvedDir} in VS Code.`
     },
     editMySelfWithCode: async function () {
         const myPath = new URL(import.meta.url).pathname
@@ -142,5 +143,6 @@ export const apiImpl: BackendAPI = {
 if (import.meta.main) {
     // For testing purposes, you can call the API methods here
 
-    console.log(await apiImpl.getLocalPortInfo(1080))
+    //console.log(await apiImpl.getLocalPortInfo(1080))
+    apiImpl.openDirWithCode(`%OneDrive%\\Arch`)
 }

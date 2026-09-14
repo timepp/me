@@ -1,0 +1,25 @@
+[
+    {
+        "type": "url",
+        "name": "Deno documentation",
+        "description": "Open the Deno documentation",
+        "tags": ["documentation"],
+        "url": "https://docs.deno.com"
+    },
+    {
+        "type": "compound",
+        "name": "Development references",
+        "subCommands": [
+            {
+                "type": "url",
+                "name": "TypeScript documentation",
+                "url": "https://www.typescriptlang.org/docs/"
+            },
+            {
+                "type": "url",
+                "name": "Deno API reference",
+                "url": "https://docs.deno.com/api/deno/"
+            }
+        ]
+    }
+]
