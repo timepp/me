@@ -1,332 +1,645 @@
-import {api} from '../api.ts'
+import { api, type CommandConfig, type CommandDraft } from '../api.ts'
+import { showOneAuthAccounts } from './components/one-auth-manager.ts'
 import * as uu from './uu.ts'
 
-const allBookmarks = `
-CDX: Dashboard
-https://cdx.transform.microsoft.com/dashboard?tab=mytenants
-Open Test Tenants
-
-Request repo permissions in 1ES
-https://eng.ms/docs/initiatives/1es-permissions-service/perms/office/oe
-
-Inspect Graph Request
-https://aka.ms/graphlogs
-
-DPS playground
-https://m365dp.azurewebsites.net/
-
-CES playground
-https://cesplayground.azurewebsites.net/
-
-Office Graph Architecture
-https://microsoft-my.sharepoint-df.com/:p:/p/simonhul/cQq2VwqJVaZbQawqNzL9uyHZEgUCajSUiP_LrY0G4chT3-4l3Q
-#Substrate,Architecture
-
-LLM dashboard
-https://llm-dash.azurewebsites.net/model_insight
-#LLM,Dashboard
-
-Arch review process
-https://teams.microsoft.com/l/message/19:6987ef3516d94c1e862c6ecd75100f25@thread.skype/1775423220114?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=7cc2bcc3-969b-404a-9de4-6cd1d539eb11&parentMessageId=1775423220114&teamName=Calling%2FMeeting%2FDevices&channelName=Announcements&createdTime=1775423220114
-
-943 admin center
-https://admin.microsoft.com/?login_hint=admin@M365CPI32306943.onmicrosoft.com
-@Profile 4
-
-T091 admin center
-https://admin.microsoft.com/?login_hint=admin@M365MCP81612091.onmicrosoft.com
-@Profile 3
-
-486 admin center
-https://admin.microsoft.com/?login_hint=admin@M365CPI00209486.onmicrosoft.com
-@Profile 2
-
-Compliance Deck
-https://microsoft-my.sharepoint-df.com/:p:/p/junhuitong/cQptgGBJtdvrTrsCUxGDkQfzEgUCxy_QibHmOLKWqV0lMsnGCw
-#Compliance,Working
-
-Compliance Doc
-https://microsoft-my.sharepoint-df.com/:w:/p/junhuitong/cQrqW4FCU2BtQ4HSLCGNca1EEgUCY6duMDJZDe0Sg__Bkz0WVw
-#Compliance,Working
-
-FSL Tech Deck
-https://microsoft.sharepoint-df.com/:p:/s/M365CoreSearchExtensibilityTeam/cQrgokjJnLdUQ723A7CvYxpsEgUCOb7oDIyNNIM_BA-XAHCzkA?isSPOFile=1&ovuser=72f988bf-86f1-41af-91ab-2d7cd011db47%2Cjunhuitong%40microsoft.com&wdExp=TEAMS-TREATMENT&web=1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiI0OS8yNjA3MTYxNjAxMSJ9
-#Substrate,Knowledge
-
-Arch Dashboard
-https://domoreexp.visualstudio.com/MSTeams/_dashboards/dashboard/0bb414f5-32ba-4056-9563-a7554a90c757
-
-Arch Query
-https://domoreexp.visualstudio.com/MSTeams/_queries/query/c84834ef-601b-4cf8-b6e6-6c8c4caad9ec/
-
-Arch Template
-https://domoreexp.visualstudio.com/MSTeams/_workitems/edit/5598914
-
-M365 Monitoring Wiki
-https://o365exchange.visualstudio.com/O365%20Core/_wiki/wikis/M365%20Passive%20Monitoring/490289/sop-access-passive-monitoring-kusto-databases
-
-`
-
-function openUrl(url: string) {
-    return async function() {
-        const result = await api.shellRun(url)
-        return result
-    }
-}
-
-function openUrlByChrome(url: string, profile: string) {
-    const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-    return async function() {
-        const result = await api.runCommand(chromePath, [
-            `--profile-directory=${profile}`, 
-            url])
-        return result
-    }
-}
-
-// Whether current device status align with the expected status after the command is executed.
+type CommandType = CommandDraft['type']
 type CommandStatus = 'unknown' | 'yes' | 'no'
 
-interface Command {
-    name: string
-    tag?: string[]
-    description?: string
-    run(): Promise<string | void>
-    status?(): Promise<CommandStatus>
+const commandTypes: CommandType[] = [
+    'url',
+    'terminal',
+    'code',
+    'message',
+    'oneAuth',
+    'compound',
+]
+
+function createButton(
+    label: string,
+    onClick: () => void | Promise<void>,
+    style = 'btn-outline-primary',
+): HTMLButtonElement {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = `btn ${style}`
+    button.textContent = label
+    button.onclick = () => void onClick()
+    return button
 }
 
-interface BookmarkCommand extends Command {
-    url: string
+function createField(
+    label: string,
+    value = '',
+    options: { required?: boolean; multiline?: boolean; type?: string } = {},
+): HTMLInputElement | HTMLTextAreaElement {
+    const group = document.createElement('label')
+    group.className = 'command-form-field'
+
+    const caption = document.createElement('span')
+    caption.textContent = label
+    group.append(caption)
+
+    const input = options.multiline
+        ? document.createElement('textarea')
+        : document.createElement('input')
+    input.className = 'form-control'
+    input.value = value
+    input.required = options.required ?? false
+    if (input instanceof HTMLInputElement && options.type) {
+        input.type = options.type
+    }
+    group.append(input)
+    return input
 }
 
-interface CompoundCommand extends Command {
-    subCommands: Command[]
+function createSelect(
+    label: string,
+    values: string[],
+    selected: string,
+): HTMLSelectElement {
+    const group = document.createElement('label')
+    group.className = 'command-form-field'
+    const caption = document.createElement('span')
+    caption.textContent = label
+    const select = document.createElement('select')
+    select.className = 'form-select'
+    for (const value of values) {
+        const option = document.createElement('option')
+        option.value = value
+        option.textContent = value
+        option.selected = value === selected
+        select.append(option)
+    }
+    group.append(caption, select)
+    return select
 }
 
-function compoundCommand(name: string, subCommands: Command[], description?: string): CompoundCommand {
-    return {
-        name,
-        tag: ['compound'],
-        description,
-        subCommands,
-        run: async function() {
-            for (const cmd of subCommands) {
-                const result = await cmd.run()
-                console.log(`Command ${cmd.name} executed with result:`, result)
+function toDraft(command: CommandConfig): CommandDraft {
+    const common = {
+        name: command.name,
+        description: command.description,
+        tags: command.tags,
+    }
+    switch (command.type) {
+        case 'url':
+            return {
+                ...common,
+                type: 'url',
+                url: command.url,
+                profile: command.profile,
             }
+        case 'terminal':
+            return {
+                ...common,
+                type: 'terminal',
+                command: command.command,
+                args: command.args,
+                statusPort: command.statusPort,
+            }
+        case 'code':
+            return { ...common, type: 'code', path: command.path }
+        case 'message':
+            return { ...common, type: 'message', content: command.content }
+        case 'oneAuth':
+            return { ...common, type: 'oneAuth' }
+        case 'compound':
+            return {
+                ...common,
+                type: 'compound',
+                mode: command.mode,
+                subCommandIds: [...command.subCommandIds],
+            }
+    }
+}
+
+function getSubCommands(
+    command: CommandConfig,
+    commandsById: ReadonlyMap<string, CommandConfig>,
+): CommandConfig[] {
+    if (command.type !== 'compound') return []
+    return command.subCommandIds.map((id) => {
+        const subCommand = commandsById.get(id)
+        if (!subCommand) throw new Error(`Referenced command not found: ${id}`)
+        return subCommand
+    })
+}
+
+function referencesCommand(
+    command: CommandConfig,
+    targetId: string,
+    commandsById: ReadonlyMap<string, CommandConfig>,
+    visited = new Set<string>(),
+): boolean {
+    if (command.type !== 'compound' || visited.has(command.id)) return false
+    visited.add(command.id)
+    return command.subCommandIds.some((id) => {
+        if (id === targetId) return true
+        const subCommand = commandsById.get(id)
+        return subCommand
+            ? referencesCommand(subCommand, targetId, commandsById, visited)
+            : false
+    })
+}
+
+function commandDetails(
+    command: CommandConfig,
+    commandsById: ReadonlyMap<string, CommandConfig>,
+): string {
+    switch (command.type) {
+        case 'url':
+            return command.profile
+                ? `${command.url} (${command.profile})`
+                : command.url
+        case 'terminal':
+            return [command.command, ...command.args].join(' ')
+        case 'code':
+            return command.path
+        case 'message':
+            return command.content
+        case 'oneAuth':
+            return 'Manage OneAuth accounts'
+        case 'compound':
+            return `${command.mode}: ${
+                getSubCommands(command, commandsById).map((item) => item.name)
+                    .join(', ')
+            }`
+    }
+}
+
+async function runCommand(
+    command: CommandConfig,
+    commandsById: ReadonlyMap<string, CommandConfig>,
+): Promise<void> {
+    switch (command.type) {
+        case 'url':
+            if (command.profile) {
+                await api.runCommand(
+                    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                    [`--profile-directory=${command.profile}`, command.url],
+                )
+            } else {
+                await api.shellRun(command.url)
+            }
+            return
+        case 'terminal':
+            await api.runCommandInTerminal(command.command, command.args)
+            return
+        case 'code': {
+            const path = command.path === '%MYSELF%'
+                ? await api.getMyselfDir()
+                : command.path
+            await api.openDirWithCode(path)
+            return
         }
-    }
-}
-
-function bookmark(name: string, url: string, description?: string, profile?: string, tags: string[] = []): BookmarkCommand {
-    return {
-        name,
-        tag: ['bookmark', ...tags],
-        description,
-        url,
-        run: profile ? openUrlByChrome(url, profile) : openUrl(url),
-    }
-}
-
-function codeLink(dir: string): Command {
-    return {
-        name: `Open '${dir}'`,
-        tag: ['code'],
-        description: `Open ${dir} in VS Code`,
-        run: async function() {
-            const result = await api.openDirWithCode(dir)
-            return result
+        case 'message': {
+            const content = document.createElement('div')
+            const instruction = document.createElement('p')
+            instruction.textContent = command.description ?? ''
+            const code = document.createElement('code')
+            code.textContent = command.content
+            content.append(instruction, code)
+            await uu.showInDialog(command.name, content)
+            return
         }
-    }
-}
-
-function parseBookmarkFromString(str: string) {
-    // split bookmarks by paragraph
-    const paras = str.split('\n').map(line => line.trim()).join('\n').split('\n\n').map(part => part.trim())
-    
-    return paras
-        .filter(part => part.length > 0)
-        .map(part => {
-            let name, url, profile, tags: string[] = [], description = ''
-            const partLines = part.split('\n')
-            for (const [i, line] of partLines.entries()) {
-                if (line.startsWith('#')) {
-                    // # for tags
-                    tags = line.substring(1).split(',').map(t => t.trim())
-                } else if (line.startsWith('@')) {
-                    // @ for profile
-                    profile = line.substring(1).trim()
-                } else if (line.startsWith('http')) {
-                    // url line
-                    url = line.trim()
-                } else {
-                    // other lines are considered as name and description
-                    if (!name) {
-                        name = line.trim()
-                    } else {
-                        description += line.trim() + '\n'
-                    }
+        case 'oneAuth':
+            await showOneAuthAccounts()
+            return
+        case 'compound':
+            const subCommands = getSubCommands(command, commandsById)
+            if (command.mode === 'choose') {
+                const choices = subCommands.map((item) =>
+                    `${item.name} (${item.type})`
+                )
+                const selectedLabel = await uu.chooseOne(choices)
+                const selectedIndex = choices.indexOf(selectedLabel ?? '')
+                if (selectedIndex >= 0) {
+                    await runCommand(subCommands[selectedIndex], commandsById)
                 }
+                return
             }
-            if (name && url) {
-                return bookmark(name, url, description.trim(), profile, tags)
+            for (const subCommand of subCommands) {
+                await runCommand(subCommand, commandsById)
             }
-
-            return null
-        })
-        .filter((cmd) => cmd !== null)
-}
-
-async function getCommands()
-{
-    const myDir = await api.getMyselfDir()
-    const bookmarks = parseBookmarkFromString(allBookmarks)
-    const commands = [
-        {
-            name: 'Launch SSH proxy',
-            description: 'Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng',
-            run: async function () {
-                const result = await api.runCommandInTerminal('ssh', [
-                    '-v',
-                    '-i', 'c:\\cloud\\INFO\\cert\\azure_tosexng_proxy_key.pem',
-                    '-D', '1080',
-                    'timepp@52.184.82.147'
-                ])
-                console.log(result)
-                // check port within 30 seconds
-            },
-            status: async function () {
-                const portInfo = await api.getLocalPortInfo(1080)
-                console.log(`got port info:`, portInfo)
-                if (portInfo.isOpen) {
-                    return 'yes'
-                } else {
-                    return 'no'
-                }
-            }
-        },
-        {
-            name: "拦截postMessage消息",
-            tag: ['debugging'],
-            description: "const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);",
-            run: async function () {
-                const code = `const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);`
-                uu.showInDialog('拦截postMessage消息', `在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试<br><br><code>${code}</code>`)
-            }
-        },
-        ...bookmarks,
-        codeLink('%OneDrive%\\Arch'),
-        codeLink(myDir),
-        codeLink('%OneDriveConsumer%')
-    ] satisfies Command[]
-    const getCommand = (name: string): Command => {
-        const command = commands.find(cmd => cmd.name === name)
-        if (!command) {
-            throw new Error(`Command not found: ${name}`)
-        }
-        return command
     }
-    const archSpace = compoundCommand('Arch Space', [
-        getCommand('Arch Dashboard'),
-        getCommand('Arch Query'),
-        getCommand('Arch Template')
-    ], 'Open Arch Spaces')
-    commands.push(archSpace)
-    return commands
 }
 
+function hasStatus(command: CommandConfig): boolean {
+    return command.type === 'terminal' && command.statusPort !== undefined
+}
 
-function updateStatus(elem: HTMLSpanElement, status: CommandStatus | 'running') {
-    console.log('Updating status for command:', elem, status)
+async function getCommandStatus(
+    command: CommandConfig,
+): Promise<CommandStatus> {
+    if (command.type !== 'terminal' || command.statusPort === undefined) {
+        return 'unknown'
+    }
+    const portInfo = await api.getLocalPortInfo(command.statusPort)
+    return portInfo.isOpen ? 'yes' : 'no'
+}
+
+function updateStatus(
+    element: HTMLElement,
+    status: CommandStatus | 'running',
+): void {
     if (status === 'running') {
-        elem.textContent = ''
-        elem.className = 'loader'
-    } else {
-        elem.className = ''
-        if (status === 'yes') {
-            elem.textContent = '✅'
-        } else if (status === 'no') {
-            elem.textContent = '❌'
-        } else {
-            elem.textContent = ''
-        }
+        element.textContent = ''
+        element.className = 'loader'
+        return
     }
+    element.className = ''
+    element.textContent = status === 'yes' ? '✅' : status === 'no' ? '❌' : ''
 }
 
-async function main() {
-    // wait for websocket connection ready
+async function showCommandDialog(
+    type: CommandType,
+    commands: CommandConfig[],
+    initial?: CommandDraft,
+    editingId?: string,
+): Promise<CommandDraft | null> {
+    const content = document.createElement('div')
+    content.className = 'command-form'
+
+    const nameInput = createField('Name', initial?.name, { required: true })
+    const descriptionInput = createField('Description', initial?.description, {
+        multiline: true,
+    })
+    const tagsInput = createField(
+        'Tags (comma separated)',
+        initial?.tags?.join(', '),
+    )
+    content.append(
+        nameInput.parentElement!,
+        descriptionInput.parentElement!,
+        tagsInput.parentElement!,
+    )
+
+    let urlInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let profileInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let executableInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let argsInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let statusPortInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let pathInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let messageInput: HTMLInputElement | HTMLTextAreaElement | undefined
+    let modeInput: HTMLSelectElement | undefined
+
+    if (type === 'url') {
+        urlInput = createField(
+            'URL',
+            initial?.type === 'url' ? initial.url : '',
+            { required: true },
+        )
+        profileInput = createField(
+            'Chrome profile (optional)',
+            initial?.type === 'url' ? initial.profile : '',
+        )
+        content.append(urlInput.parentElement!, profileInput.parentElement!)
+    } else if (type === 'terminal') {
+        executableInput = createField(
+            'Executable',
+            initial?.type === 'terminal' ? initial.command : '',
+            { required: true },
+        )
+        argsInput = createField(
+            'Arguments (one per line)',
+            initial?.type === 'terminal' ? initial.args.join('\n') : '',
+            { multiline: true },
+        )
+        statusPortInput = createField(
+            'Status port (optional)',
+            initial?.type === 'terminal' && initial.statusPort !== undefined
+                ? String(initial.statusPort)
+                : '',
+            { type: 'number' },
+        )
+        content.append(
+            executableInput.parentElement!,
+            argsInput.parentElement!,
+            statusPortInput.parentElement!,
+        )
+    } else if (type === 'code') {
+        pathInput = createField(
+            'Directory (%MYSELF% means this app directory)',
+            initial?.type === 'code' ? initial.path : '',
+            { required: true },
+        )
+        content.append(pathInput.parentElement!)
+    } else if (type === 'message') {
+        messageInput = createField(
+            'Message',
+            initial?.type === 'message' ? initial.content : '',
+            { required: true, multiline: true },
+        )
+        content.append(messageInput.parentElement!)
+    }
+
+    const selectedCommandIds = new Set(
+        initial?.type === 'compound' ? initial.subCommandIds : [],
+    )
+
+    if (type === 'compound') {
+        modeInput = createSelect(
+            'Run mode',
+            ['all', 'choose'],
+            initial?.type === 'compound' ? initial.mode : 'all',
+        )
+        content.append(modeInput.parentElement!)
+
+        const section = document.createElement('section')
+        section.className = 'sub-command-section'
+        const heading = document.createElement('strong')
+        heading.textContent = 'Select existing commands'
+        const list = document.createElement('div')
+        list.className = 'sub-command-list'
+        const commandsById = new Map(
+            commands.map((command) => [command.id, command]),
+        )
+        for (const command of commands) {
+            if (
+                command.id === editingId ||
+                (editingId &&
+                    referencesCommand(command, editingId, commandsById))
+            ) {
+                continue
+            }
+            const row = document.createElement('label')
+            row.className = 'sub-command-row'
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            checkbox.checked = selectedCommandIds.has(command.id)
+            checkbox.onchange = () => {
+                if (checkbox.checked) {
+                    selectedCommandIds.add(command.id)
+                } else {
+                    selectedCommandIds.delete(command.id)
+                }
+            }
+            const summary = document.createElement('span')
+            summary.textContent = `${command.name} (${command.type})`
+            row.append(checkbox, summary)
+            list.append(row)
+        }
+        if (list.childElementCount === 0) {
+            const empty = document.createElement('span')
+            empty.className = 'text-muted'
+            empty.textContent = 'No other commands are available'
+            list.append(empty)
+        }
+        section.append(heading, list)
+        content.append(section)
+    }
+
+    let result: CommandDraft | null = null
+    await uu.showInDialog(
+        `${initial ? 'Edit' : 'Add'} ${type} command`,
+        content,
+        {
+            Save: () => {
+                const name = nameInput.value.trim()
+                if (!name) {
+                    alert('Please fill in all required fields.')
+                    return false
+                }
+                const common = {
+                    name,
+                    description: descriptionInput.value.trim() || undefined,
+                    tags: tagsInput.value.split(',').map((tag) => tag.trim())
+                        .filter(Boolean),
+                }
+                switch (type) {
+                    case 'url': {
+                        const url = urlInput!.value.trim()
+                        if (!url) return false
+                        result = {
+                            ...common,
+                            type,
+                            url,
+                            profile: profileInput!.value.trim() || undefined,
+                        }
+                        break
+                    }
+                    case 'terminal': {
+                        const command = executableInput!.value.trim()
+                        const statusPortText = statusPortInput!.value.trim()
+                        const statusPort = statusPortText
+                            ? Number(statusPortText)
+                            : undefined
+                        if (
+                            !command ||
+                            (statusPort !== undefined &&
+                                (!Number.isInteger(statusPort) ||
+                                    statusPort < 1 || statusPort > 65535))
+                        ) {
+                            alert('Executable and status port must be valid.')
+                            return false
+                        }
+                        result = {
+                            ...common,
+                            type,
+                            command,
+                            args: argsInput!.value.split('\n').map((arg) =>
+                                arg.trim()
+                            ).filter(Boolean),
+                            statusPort,
+                        }
+                        break
+                    }
+                    case 'code': {
+                        const path = pathInput!.value.trim()
+                        if (!path) return false
+                        result = { ...common, type, path }
+                        break
+                    }
+                    case 'message': {
+                        const message = messageInput!.value.trim()
+                        if (!message) return false
+                        result = { ...common, type, content: message }
+                        break
+                    }
+                    case 'oneAuth':
+                        result = { ...common, type }
+                        break
+                    case 'compound':
+                        result = {
+                            ...common,
+                            type,
+                            mode: modeInput!.value as 'all' | 'choose',
+                            subCommandIds: commands
+                                .filter((command) =>
+                                    selectedCommandIds.has(command.id)
+                                )
+                                .map((command) => command.id),
+                        }
+                        break
+                }
+                return true
+            },
+            Cancel: () => true,
+        },
+    )
+    return result
+}
+
+async function main(): Promise<void> {
     uu.enableFontAwesome()
 
-    const commands = await getCommands()
+    const root = document.createElement('main')
+    root.className = 'command-manager'
+    document.body.append(root)
+    const statusElements = new Map<string, HTMLElement>()
+    let commandsById = new Map<string, CommandConfig>()
 
-    const statusElements: Record<string, HTMLElement> = {}
-    const getElement = (item: Command) => statusElements[item.name]
-    const setElement = (item: Command, element: HTMLElement) => statusElements[item.name] = element
-    const run = async (item: Command) => {
-        const result = await item.run()
-        if (item.status) {
-            updateStatus(getElement(item), 'running')
-            // we need to keep check item status until it's ok
-            for (let i = 0; i < 10; i++) {
-                await new Promise(r => setTimeout(r, 1000))
-                const status = await item.status?.()
-                if (status === 'yes') {
-                    updateStatus(getElement(item), 'yes')
+    const run = async (command: CommandConfig) => {
+        try {
+            await runCommand(command, commandsById)
+            if (!hasStatus(command)) return
+            const element = statusElements.get(command.id)
+            if (!element) return
+            updateStatus(element, 'running')
+            for (let attempt = 0; attempt < 10; attempt++) {
+                await new Promise((resolve) => setTimeout(resolve, 1000))
+                if (await getCommandStatus(command) === 'yes') {
+                    updateStatus(element, 'yes')
                     return
                 }
             }
-            // if after retrying for a while, the status is still not yes, we set it to no
-            updateStatus(getElement(item), 'no')
+            updateStatus(element, 'no')
+        } catch (error) {
+            alert(
+                `Failed to run command: ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+            )
         }
     }
-    document.body.append(uu.visualizeArray(commands, {
-        renderStyles: ['table', 'tile'],
-        renderOption: {
-            propOptions: {
-                status: {
-                    formatter: function(item, prop, index) {
-                        let element = getElement(item)
-                        if (element) {
+
+    const renderCommands = async () => {
+        const commands = await api.getCommands()
+        commandsById = new Map(commands.map((command) => [command.id, command]))
+        const toolbar = document.createElement('div')
+        toolbar.className = 'command-toolbar'
+
+        for (const type of commandTypes) {
+            toolbar.append(createButton(`Add ${type}`, async () => {
+                const draft = await showCommandDialog(type, commands)
+                if (!draft) return
+                try {
+                    await api.addCommand(draft)
+                    await renderCommands()
+                } catch (error) {
+                    alert(
+                        `Failed to add command: ${
+                            error instanceof Error
+                                ? error.message
+                                : String(error)
+                        }`,
+                    )
+                }
+            }))
+        }
+
+        const table = uu.visualizeArray(commands, {
+            renderStyles: ['table', 'tile'],
+            renderOption: {
+                props: [
+                    'type',
+                    'name',
+                    'description',
+                    'tags',
+                    'details',
+                    'status',
+                ],
+                propOptions: {
+                    details: {
+                        formatter: (item) => commandDetails(item, commandsById),
+                    },
+                    tags: {
+                        formatter: (item) => item.tags?.join(', ') ?? '',
+                    },
+                    status: {
+                        formatter: (item) => {
+                            const element = document.createElement('span')
+                            statusElements.set(item.id, element)
+                            if (hasStatus(item)) {
+                                void getCommandStatus(item).then((status) =>
+                                    updateStatus(element, status)
+                                )
+                            }
                             return element
+                        },
+                    },
+                },
+                onItemClick: async (item) => {
+                    await run(item)
+                    return true
+                },
+            },
+            itemActions: (item) => {
+                const actions: uu.ItemActions = {
+                    Run: async () => await run(item),
+                    Edit: async () => {
+                        const draft = await showCommandDialog(
+                            item.type,
+                            commands,
+                            toDraft(item),
+                            item.id,
+                        )
+                        if (!draft) return
+                        try {
+                            await api.updateCommand(item.id, draft)
+                            await renderCommands()
+                        } catch (error) {
+                            alert(
+                                `Failed to update command: ${
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error)
+                                }`,
+                            )
                         }
-                        element = uu.createElement(null, 'span', [], 'N/A')
-                        setElement(item, element)
-                        if (item.status) {
-                            item.status().then((status: CommandStatus) => {
-                                updateStatus(element, status)
-                            })
+                    },
+                    Delete: async () => {
+                        if (!confirm(`Delete command "${item.name}"?`)) return
+                        try {
+                            await api.deleteCommand(item.id)
+                            await renderCommands()
+                        } catch (error) {
+                            alert(
+                                `Failed to delete command: ${
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error)
+                                }`,
+                            )
                         }
-                        return element
+                    },
+                }
+                if (hasStatus(item)) {
+                    actions['Refresh Status'] = async () => {
+                        const element = statusElements.get(item.id)
+                        if (element) {
+                            updateStatus(
+                                element,
+                                await getCommandStatus(item),
+                            )
+                        }
                     }
                 }
+                return actions
             },
-            onItemClick: async function(item, index) {
-                run(item)
-                return true
-            }
-        },
-        itemActions: item => {
-            const actions: uu.ItemActions = {
-                'Run': async function(item: Command) {
-                    await run(item)
-                },
-            }
-            if (item.status) {
-                actions['Refresh Status'] = async function(item: Command) {
-                    updateStatus(getElement(item), 'unknown')
-                    const status = await item.status!()
-                    updateStatus(getElement(item), status)
-                }
-            }
-            return actions
-        },
-        hideUniformProps: false,
-        rawIndexProp: '#',
-        stateKey: 'MyEnv'
-    }))
+            hideUniformProps: false,
+            rawIndexProp: '#',
+            stateKey: 'MyEnvCommands',
+        })
+        root.replaceChildren(toolbar, table)
+    }
+
+    try {
+        await renderCommands()
+    } catch (error) {
+        root.textContent = `Failed to load commands: ${
+            error instanceof Error ? error.message : String(error)
+        }`
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    main();
-}, false);
-
+document.addEventListener('DOMContentLoaded', () => void main(), false)

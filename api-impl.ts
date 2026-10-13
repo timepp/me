@@ -1,7 +1,15 @@
 // deno-lint-ignore-file require-await
 import type { BackendAPI } from './api.ts'
+import { CommandManager } from './command.ts'
+import { getOneAuthAccounts, removeOneAuthAccount } from './lib/oneauth.ts'
+
+const commandManager = new CommandManager()
 
 export const apiImpl: BackendAPI = {
+    getCommands: () => commandManager.getCommands(),
+    addCommand: command => commandManager.addCommand(command),
+    updateCommand: (id, command) => commandManager.updateCommand(id, command),
+    deleteCommand: id => commandManager.deleteCommand(id),
     getMyselfDir: async function () {
         const myPath = new URL(import.meta.url).pathname
         // /D:/src/me/api-impl.ts => D:\src\me
@@ -137,7 +145,15 @@ export const apiImpl: BackendAPI = {
             isOpen: processes.length > 0,
             processes,
         }
-    }
+    },
+    getOneAuthAccounts: async () => {
+        // Implement the logic to get OneAuth accounts
+        return await getOneAuthAccounts()
+    },
+    removeOneAuthAccount: async (id: string) => {
+        // Implement the logic to remove a OneAuth account by ID
+        return await removeOneAuthAccount(id)
+    },
 }
 
 if (import.meta.main) {

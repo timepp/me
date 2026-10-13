@@ -1,25 +1,276 @@
 [
     {
-        "type": "url",
-        "name": "Deno documentation",
-        "description": "Open the Deno documentation",
-        "tags": ["documentation"],
-        "url": "https://docs.deno.com"
+        "id": "aedf98b3-b9db-42de-aa96-58f0b4137484",
+        "type": "terminal",
+        "name": "Launch SSH proxy",
+        "description": "Launch an SSH proxy using VM in Azure. The public IP address comes from the VM in `portal.azure.com` @ tosexng",
+        "command": "ssh",
+        "args": [
+            "-v",
+            "-i",
+            "c:\\cloud\\INFO\\cert\\azure_tosexng_proxy_key.pem",
+            "-D",
+            "1080",
+            "timepp@52.184.82.147"
+        ],
+        "statusPort": 1080
     },
     {
+        "id": "a55553ca-7523-4dd8-90ac-b4f66aa35cb2",
+        "type": "message",
+        "name": "拦截postMessage消息",
+        "description": "在浏览器控制台执行以下代码，可以拦截当前页面的postMessage消息，方便调试",
+        "tags": [
+            "debugging"
+        ],
+        "content": "const h1 = e => console.log('post message: ', e.origin, e.data); window.addEventListener('message', h1, true);"
+    },
+    {
+        "id": "d0735436-1147-445a-974c-3ac1a75f7396",
+        "type": "url",
+        "name": "Request repo permissions in 1ES",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://eng.ms/docs/initiatives/1es-permissions-service/perms/office/oe"
+    },
+    {
+        "id": "1c2b9942-8423-4775-a203-47b0913f08c1",
+        "type": "url",
+        "name": "Inspect Graph Request",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://aka.ms/graphlogs"
+    },
+    {
+        "id": "5d759e67-32ca-4b60-94e4-298953cdba78",
+        "type": "url",
+        "name": "DPS playground",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://m365dp.azurewebsites.net/"
+    },
+    {
+        "id": "c647e6c5-c360-44b7-8587-86ca0199322d",
+        "type": "url",
+        "name": "CES playground",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://cesplayground.azurewebsites.net/"
+    },
+    {
+        "id": "f814f404-3166-4429-91cc-586d77a56a72",
+        "type": "url",
+        "name": "Office Graph Architecture",
+        "tags": [
+            "bookmark",
+            "Substrate",
+            "Architecture"
+        ],
+        "url": "https://microsoft-my.sharepoint-df.com/:p:/p/simonhul/cQq2VwqJVaZbQawqNzL9uyHZEgUCajSUiP_LrY0G4chT3-4l3Q"
+    },
+    {
+        "id": "5830cfe8-9ca6-467e-9fe4-7e7902a50cc7",
+        "type": "url",
+        "name": "LLM dashboard",
+        "tags": [
+            "bookmark",
+            "LLM",
+            "Dashboard"
+        ],
+        "url": "https://llm-dash.azurewebsites.net/model_insight"
+    },
+    {
+        "id": "ad75f023-384c-4eff-8703-67993a6c8a39",
+        "type": "url",
+        "name": "Arch review process",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://teams.microsoft.com/l/message/19:6987ef3516d94c1e862c6ecd75100f25@thread.skype/1775423220114?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=7cc2bcc3-969b-404a-9de4-6cd1d539eb11&parentMessageId=1775423220114&teamName=Calling%2FMeeting%2FDevices&channelName=Announcements&createdTime=1775423220114"
+    },
+    {
+        "id": "a09ff0cc-0639-4457-90ec-ce3222759e54",
+        "type": "url",
+        "name": "Compliance Deck",
+        "tags": [
+            "bookmark",
+            "Compliance",
+            "Working"
+        ],
+        "url": "https://microsoft-my.sharepoint-df.com/:p:/p/junhuitong/cQptgGBJtdvrTrsCUxGDkQfzEgUCxy_QibHmOLKWqV0lMsnGCw"
+    },
+    {
+        "id": "15f73953-e22b-47fa-89bf-15697dc5ea52",
+        "type": "url",
+        "name": "Compliance Doc",
+        "tags": [
+            "bookmark",
+            "Compliance",
+            "Working"
+        ],
+        "url": "https://microsoft-my.sharepoint-df.com/:w:/p/junhuitong/cQrqW4FCU2BtQ4HSLCGNca1EEgUCY6duMDJZDe0Sg__Bkz0WVw"
+    },
+    {
+        "id": "4beb5df0-5cca-41c2-b4e7-e00450f018af",
+        "type": "url",
+        "name": "FSL Tech Deck",
+        "tags": [
+            "bookmark",
+            "Substrate",
+            "Knowledge"
+        ],
+        "url": "https://microsoft.sharepoint-df.com/:p:/s/M365CoreSearchExtensibilityTeam/cQrgokjJnLdUQ723A7CvYxpsEgUCOb7oDIyNNIM_BA-XAHCzkA?isSPOFile=1&ovuser=72f988bf-86f1-41af-91ab-2d7cd011db47%2Cjunhuitong%40microsoft.com&wdExp=TEAMS-TREATMENT&web=1&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiI0OS8yNjA3MTYxNjAxMSJ9"
+    },
+    {
+        "id": "2737197a-0989-41cd-a8a9-c4cb93dd6076",
+        "type": "url",
+        "name": "Arch Dashboard",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://domoreexp.visualstudio.com/MSTeams/_dashboards/dashboard/0bb414f5-32ba-4056-9563-a7554a90c757"
+    },
+    {
+        "id": "75790b3c-ff34-4a26-9749-6936fc49458a",
+        "type": "url",
+        "name": "Arch Query",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://domoreexp.visualstudio.com/MSTeams/_queries/query/c84834ef-601b-4cf8-b6e6-6c8c4caad9ec/"
+    },
+    {
+        "id": "65d516e9-28cd-4119-bf2a-41057e8702c1",
+        "type": "url",
+        "name": "Arch Template",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://domoreexp.visualstudio.com/MSTeams/_workitems/edit/5598914"
+    },
+    {
+        "id": "6c644722-1bab-4dfc-bef2-c6fb77dde3bb",
+        "type": "url",
+        "name": "M365 Monitoring Wiki",
+        "tags": [
+            "bookmark"
+        ],
+        "url": "https://o365exchange.visualstudio.com/O365%20Core/_wiki/wikis/M365%20Passive%20Monitoring/490289/sop-access-passive-monitoring-kusto-databases"
+    },
+    {
+        "id": "6fe11d9f-eb60-4f9c-9ed5-17d5321f4dcd",
+        "type": "code",
+        "name": "Open '%OneDrive%\\Arch'",
+        "description": "Open %OneDrive%\\Arch in VS Code",
+        "tags": [
+            "code"
+        ],
+        "path": "%OneDrive%\\Arch"
+    },
+    {
+        "id": "7fdff6c5-63f3-45d7-add6-4c8b42eac221",
+        "type": "code",
+        "name": "Open this app",
+        "description": "Open this app directory in VS Code",
+        "tags": [
+            "code"
+        ],
+        "path": "%MYSELF%"
+    },
+    {
+        "id": "8ae7a182-8e6a-495b-a00b-61badc7f2f06",
+        "type": "code",
+        "name": "Open '%OneDriveConsumer%'",
+        "description": "Open %OneDriveConsumer% in VS Code",
+        "tags": [
+            "code"
+        ],
+        "path": "%OneDriveConsumer%"
+    },
+    {
+        "id": "f2abe6ff-6acb-4a41-8246-0a8182657cdd",
         "type": "compound",
-        "name": "Development references",
-        "subCommands": [
-            {
-                "type": "url",
-                "name": "TypeScript documentation",
-                "url": "https://www.typescriptlang.org/docs/"
-            },
-            {
-                "type": "url",
-                "name": "Deno API reference",
-                "url": "https://docs.deno.com/api/deno/"
-            }
+        "name": "Arch Space",
+        "description": "Open Arch Spaces",
+        "tags": [
+            "compound"
+        ],
+        "mode": "all",
+        "subCommandIds": [
+            "2737197a-0989-41cd-a8a9-c4cb93dd6076",
+            "75790b3c-ff34-4a26-9749-6936fc49458a",
+            "65d516e9-28cd-4119-bf2a-41057e8702c1"
+        ]
+    },
+    {
+        "id": "60e54a6a-50cc-41e5-bd0f-68a55630c6cf",
+        "type": "oneAuth",
+        "name": "OneAuth Accounts"
+    },
+    {
+        "id": "2fc3bb95-41ca-4afc-a283-8c51cbd85a50",
+        "type": "url",
+        "name": "CDX",
+        "description": "CDX Dashboard",
+        "tags": [
+            "bookmark",
+            "tenant"
+        ],
+        "url": "https://cdx.transform.microsoft.com/dashboard?tab=mytenants"
+    },
+    {
+        "id": "25f175a6-84cf-48cc-8ab0-3f99b83a541d",
+        "type": "url",
+        "name": "943 admin center",
+        "description": "943 Admin Center",
+        "tags": [
+            "bookmark",
+            "tenant"
+        ],
+        "url": "https://admin.microsoft.com/?login_hint=admin@M365CPI32306943.onmicrosoft.com",
+        "profile": "Profile 4"
+    },
+    {
+        "id": "d7263c2d-538d-4563-aa68-956563de801a",
+        "type": "url",
+        "name": "486 admin center",
+        "description": "486 Admin Center",
+        "tags": [
+            "bookmark",
+            "tenant"
+        ],
+        "url": "https://admin.microsoft.com/?login_hint=admin@M365CPI00209486.onmicrosoft.com",
+        "profile": "Profile 2"
+    },
+    {
+        "id": "88c8c90a-3ca9-4987-ba09-6d3ec5ec4234",
+        "type": "url",
+        "name": "PDS 547",
+        "description": "PDS 547 Admin Center",
+        "tags": [
+            "bookmark",
+            "tenant"
+        ],
+        "url": "https://admin.microsoft.com/?login_hint=admin@M365DS680547.onmicrosoft.com",
+        "profile": "Profile 3"
+    },
+    {
+        "id": "83369144-c077-45c2-8556-6496d07f32d1",
+        "type": "compound",
+        "name": "Test Tenants",
+        "tags": [
+            "chooser"
+        ],
+        "mode": "choose",
+        "subCommandIds": [
+            "2fc3bb95-41ca-4afc-a283-8c51cbd85a50",
+            "25f175a6-84cf-48cc-8ab0-3f99b83a541d",
+            "d7263c2d-538d-4563-aa68-956563de801a",
+            "88c8c90a-3ca9-4987-ba09-6d3ec5ec4234"
         ]
     }
 ]

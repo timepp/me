@@ -1,1 +1,1 @@
-export * from '../uu/src/uu.ts'
+export * from 'https://esm.sh/jsr/@timepp/uu@1.0.22/cdn'
