@@ -1,4 +1,10 @@
-import { api, type CommandConfig, type CommandDraft } from '../api.ts'
+import {
+    api,
+    type CommandConfig,
+    type CommandDraft,
+    type CommandExecutionResult,
+    type GetUserInput,
+} from '../api.ts'
 import { showOneAuthAccounts } from './components/one-auth-manager.ts'
 import * as uu from './uu.ts'
 
@@ -166,63 +172,6 @@ function commandDetails(
     }
 }
 
-async function runCommand(
-    command: CommandConfig,
-    commandsById: ReadonlyMap<string, CommandConfig>,
-): Promise<void> {
-    switch (command.type) {
-        case 'url':
-            if (command.profile) {
-                await api.runCommand(
-                    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-                    [`--profile-directory=${command.profile}`, command.url],
-                )
-            } else {
-                await api.shellRun(command.url)
-            }
-            return
-        case 'terminal':
-            await api.runCommandInTerminal(command.command, command.args)
-            return
-        case 'code': {
-            const path = command.path === '%MYSELF%'
-                ? await api.getMyselfDir()
-                : command.path
-            await api.openDirWithCode(path)
-            return
-        }
-        case 'message': {
-            const content = document.createElement('div')
-            const instruction = document.createElement('p')
-            instruction.textContent = command.description ?? ''
-            const code = document.createElement('code')
-            code.textContent = command.content
-            content.append(instruction, code)
-            await uu.showInDialog(command.name, content)
-            return
-        }
-        case 'oneAuth':
-            await showOneAuthAccounts()
-            return
-        case 'compound':
-            const subCommands = getSubCommands(command, commandsById)
-            if (command.mode === 'choose') {
-                const choices = subCommands.map((item) =>
-                    `${item.name} (${item.type})`
-                )
-                const selectedLabel = await uu.chooseOne(choices)
-                const selectedIndex = choices.indexOf(selectedLabel ?? '')
-                if (selectedIndex >= 0) {
-                    await runCommand(subCommands[selectedIndex], commandsById)
-                }
-                return
-            }
-            for (const subCommand of subCommands) {
-                await runCommand(subCommand, commandsById)
-            }
-    }
-}
-
 function hasStatus(command: CommandConfig): boolean {
     return command.type === 'terminal' && command.statusPort !== undefined
 }
@@ -248,6 +197,72 @@ function updateStatus(
     }
     element.className = ''
     element.textContent = status === 'yes' ? '✅' : status === 'no' ? '❌' : ''
+}
+
+const getUserInput: GetUserInput = async (
+    topic,
+    choices,
+    allowFreeString,
+) => {
+    let value: string | undefined
+    const content = document.createElement('div')
+    content.className = 'command-input'
+
+    const topicElement = document.createElement('p')
+    topicElement.textContent = topic
+    content.append(topicElement)
+
+    let choiceInput: HTMLSelectElement | undefined
+    if (choices?.length) {
+        choiceInput = document.createElement('select')
+        choiceInput.className = 'form-select'
+        for (const choice of choices) {
+            const option = document.createElement('option')
+            option.value = choice
+            option.textContent = choice
+            choiceInput.append(option)
+        }
+        content.append(choiceInput)
+    }
+
+    let freeInput: HTMLInputElement | undefined
+    if (allowFreeString) {
+        freeInput = document.createElement('input')
+        freeInput.className = 'form-control'
+        freeInput.type = 'text'
+        content.append(freeInput)
+    }
+
+    await uu.showInDialog('Command input', content, {
+        OK: () => {
+            value = freeInput?.value.trim() || choiceInput?.value || ''
+            return true
+        },
+        Cancel: () => true,
+    })
+    return value
+}
+
+async function showCommandResult(
+    result: CommandExecutionResult,
+): Promise<void> {
+    switch (result.type) {
+        case 'message': {
+            const content = document.createElement('div')
+            if (result.description) {
+                const description = document.createElement('p')
+                description.textContent = result.description
+                content.append(description)
+            }
+            const message = document.createElement('code')
+            message.textContent = result.content
+            content.append(message)
+            await uu.showInDialog(result.title, content)
+            return
+        }
+        case 'oneAuth':
+            await showOneAuthAccounts(result.accounts, result.title)
+    }
 }
 
 async function showCommandDialog(
@@ -490,7 +505,11 @@ async function main(): Promise<void> {
 
     const run = async (command: CommandConfig) => {
         try {
-            await runCommand(command, commandsById)
+            const results = await api.runConfiguredCommand(
+                command.id,
+                getUserInput,
+            )
+            for (const result of results) await showCommandResult(result)
             if (!hasStatus(command)) return
             const element = statusElements.get(command.id)
             if (!element) return

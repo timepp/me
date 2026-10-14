@@ -1,4 +1,10 @@
 import { CommandManager, parseCommandConfigs } from './command.ts'
+import {
+    filterCommandsByName,
+    resolveCommandSelection,
+    resolveExactCommandId,
+    summarizeOneAuthAccounts,
+} from './cli.ts'
 
 const firstId = '11111111-1111-4111-8111-111111111111'
 const secondId = '22222222-2222-4222-8222-222222222222'
@@ -149,6 +155,132 @@ Deno.test('parseCommandConfigs validates GUID references and cycles', () => {
             error = caught
         }
         assert(error instanceof TypeError, 'invalid command graph should fail')
+    }
+})
+
+Deno.test('CLI resolves exact IDs and filters command names', () => {
+    const commands = [
+        { id: firstId, name: 'First' },
+        { id: secondId, name: 'Second' },
+        {
+            id: '83369144-c077-45c2-8556-6496d07f32d1',
+            name: 'Test Tenants',
+        },
+    ]
+    assert(
+        resolveExactCommandId(firstId.toUpperCase(), commands) === firstId,
+        'an exact ID match should be case-insensitive',
+    )
+    assert(
+        filterCommandsByName(
+            'test TEN',
+            commands.map((command) => ({
+                ...command,
+                type: 'message' as const,
+                content: command.name,
+            })),
+        )[0].id === commands[2].id,
+        'name filtering should be case-insensitive and allow partial names',
+    )
+    const commandConfigs = commands.map((command) => ({
+        ...command,
+        type: 'message' as const,
+        content: command.name,
+    }))
+    assert(
+        resolveCommandSelection('2', commandConfigs).id === secondId,
+        'a command number should select the matching filtered command',
+    )
+
+    let missingError: unknown
+    try {
+        resolveExactCommandId('8336', commands)
+    } catch (error) {
+        missingError = error
+    }
+    assert(
+        missingError instanceof Error &&
+            missingError.message.includes('not found'),
+        'a partial ID should not be accepted by --run',
+    )
+})
+
+Deno.test('CLI summarizes OneAuth accounts without verbose fields', () => {
+    const summary = summarizeOneAuthAccounts([
+        {
+            id: 'account-id',
+            displayName: 'Ada Lovelace',
+            token: 'must-not-be-rendered',
+            nested: { large: 'value' },
+        },
+    ])
+    assert(summary.length === 1, 'one account should produce one summary row')
+    assert(summary[0]['#'] === 1, 'summary should include a display index')
+    assert(
+        summary[0].account === 'Ada Lovelace',
+        'summary should use a recognizable account name',
+    )
+    assert(summary[0].id === 'account-id', 'summary should retain account ID')
+    assert(
+        !('token' in summary[0]) && !('nested' in summary[0]),
+        'summary should exclude verbose and sensitive fields',
+    )
+})
+
+Deno.test('CommandManager runs message and chosen compound commands', async () => {
+    const directory = await Deno.makeTempDir()
+    const path = `${directory}\\commands.json`
+    const messageId = '33333333-3333-4333-8333-333333333333'
+    const compoundId = '44444444-4444-4444-8444-444444444444'
+    await Deno.writeTextFile(
+        path,
+        JSON.stringify([
+            {
+                id: messageId,
+                type: 'message',
+                name: 'Child',
+                description: 'Read this',
+                content: 'Hello',
+            },
+            {
+                id: compoundId,
+                type: 'compound',
+                name: 'Parent',
+                mode: 'choose',
+                subCommandIds: [messageId],
+            },
+        ]),
+    )
+    const manager = new CommandManager(path)
+    const prompts: Array<{
+        topic: string
+        choices?: string[]
+        allowFreeString?: boolean
+    }> = []
+
+    try {
+        const results = await manager.runCommand(
+            compoundId,
+            (topic, choices, allowFreeString) => {
+                prompts.push({ topic, choices, allowFreeString })
+                return Promise.resolve(choices?.[0])
+            },
+        )
+        assert(prompts.length === 1, 'choose should request input')
+        assert(
+            prompts[0].choices?.[0] === 'Child (message)',
+            'compound command should expose its child as a choice',
+        )
+        assert(results.length === 1, 'message command should return one result')
+        assert(
+            results[0].type === 'message' &&
+                results[0].title === 'Child' &&
+                results[0].description === 'Read this' &&
+                results[0].content === 'Hello',
+            'message command should return content for the caller to render',
+        )
+    } finally {
+        await Deno.remove(directory, { recursive: true })
     }
 })
 

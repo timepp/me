@@ -6,7 +6,7 @@
     "jsr:@std/encoding@1.0.1": "1.0.1",
     "jsr:@std/media-types@1.0.1": "1.0.1",
     "jsr:@std/path@1.0.0": "1.0.0",
-    "jsr:@timepp/dui@0.4.2": "0.4.2",
+    "jsr:@timepp/dui@0.4.4": "0.4.4",
     "jsr:@timepp/uu@1.0.6": "1.0.6",
     "npm:vite@6.3.5": "6.3.5"
   },
@@ -26,8 +26,8 @@
     "@std/path@1.0.0": {
       "integrity": "77fcb858b6e38777d1154df0f02245ba0b07e2c40ca3c0eec57c9233188c2d21"
     },
-    "@timepp/dui@0.4.2": {
-      "integrity": "d336553360f20c3c21a52c1f437d1362e200ccb4a0f61af60613c73ed38a569b",
+    "@timepp/dui@0.4.4": {
+      "integrity": "911e661c9925655fd0f2ba438cf29990254fa25dd36f3ffa3fd99383af36baa5",
       "dependencies": [
         "jsr:@lambdalisue/systemopen",
         "jsr:@std/encoding",
@@ -45,318 +45,265 @@
     "@esbuild/aix-ppc64@0.25.12": {
       "integrity": "80fcbe36130e58b7670511e888b8e88a259ed76c",
       "os": ["aix"],
-      "cpu": ["ppc64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/aix-ppc64/-/aix-ppc64-0.25.12.tgz"
+      "cpu": ["ppc64"]
     },
     "@esbuild/android-arm64@0.25.12": {
       "integrity": "8aa4965f8d0a7982dc21734bf6601323a66da752",
       "os": ["android"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/android-arm64/-/android-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/android-arm@0.25.12": {
       "integrity": "300712101f7f50f1d2627a162e6e09b109b6767a",
       "os": ["android"],
-      "cpu": ["arm"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/android-arm/-/android-arm-0.25.12.tgz"
+      "cpu": ["arm"]
     },
     "@esbuild/android-x64@0.25.12": {
       "integrity": "87dfb27161202bdc958ef48bb61b09c758faee16",
       "os": ["android"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/android-x64/-/android-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/darwin-arm64@0.25.12": {
       "integrity": "79197898ec1ff745d21c071e1c7cc3c802f0c1fd",
       "os": ["darwin"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/darwin-arm64/-/darwin-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/darwin-x64@0.25.12": {
       "integrity": "146400a8562133f45c4d2eadcf37ddd09718079e",
       "os": ["darwin"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/darwin-x64/-/darwin-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/freebsd-arm64@0.25.12": {
       "integrity": "1c5f9ba7206e158fd2b24c59fa2d2c8bb47ca0fe",
       "os": ["freebsd"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/freebsd-arm64/-/freebsd-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/freebsd-x64@0.25.12": {
       "integrity": "ea631f4a36beaac4b9279fa0fcc6ca29eaeeb2b3",
       "os": ["freebsd"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/freebsd-x64/-/freebsd-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/linux-arm64@0.25.12": {
       "integrity": "e1066bce58394f1b1141deec8557a5f0a22f5977",
       "os": ["linux"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-arm64/-/linux-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/linux-arm@0.25.12": {
       "integrity": "452cd66b20932d08bdc53a8b61c0e30baf4348b9",
       "os": ["linux"],
-      "cpu": ["arm"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-arm/-/linux-arm-0.25.12.tgz"
+      "cpu": ["arm"]
     },
     "@esbuild/linux-ia32@0.25.12": {
       "integrity": "b24f8acc45bcf54192c7f2f3be1b53e6551eafe0",
       "os": ["linux"],
-      "cpu": ["ia32"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-ia32/-/linux-ia32-0.25.12.tgz"
+      "cpu": ["ia32"]
     },
     "@esbuild/linux-loong64@0.25.12": {
       "integrity": "f9cfffa7fc8322571fbc4c8b3268caf15bd81ad0",
       "os": ["linux"],
-      "cpu": ["loong64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-loong64/-/linux-loong64-0.25.12.tgz"
+      "cpu": ["loong64"]
     },
     "@esbuild/linux-mips64el@0.25.12": {
       "integrity": "575a14bd74644ffab891adc7d7e60d275296f2cd",
       "os": ["linux"],
-      "cpu": ["mips64el"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-mips64el/-/linux-mips64el-0.25.12.tgz"
+      "cpu": ["mips64el"]
     },
     "@esbuild/linux-ppc64@0.25.12": {
       "integrity": "75b99c70a95fbd5f7739d7692befe60601591869",
       "os": ["linux"],
-      "cpu": ["ppc64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-ppc64/-/linux-ppc64-0.25.12.tgz"
+      "cpu": ["ppc64"]
     },
     "@esbuild/linux-riscv64@0.25.12": {
       "integrity": "2e3259440321a44e79ddf7535c325057da875cd6",
       "os": ["linux"],
-      "cpu": ["riscv64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-riscv64/-/linux-riscv64-0.25.12.tgz"
+      "cpu": ["riscv64"]
     },
     "@esbuild/linux-s390x@0.25.12": {
       "integrity": "17676cabbfe5928da5b2a0d6df5d58cd08db2663",
       "os": ["linux"],
-      "cpu": ["s390x"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-s390x/-/linux-s390x-0.25.12.tgz"
+      "cpu": ["s390x"]
     },
     "@esbuild/linux-x64@0.25.12": {
       "integrity": "0583775685ca82066d04c3507f09524d3cd7a306",
       "os": ["linux"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/linux-x64/-/linux-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/netbsd-arm64@0.25.12": {
       "integrity": "f04c4049cb2e252fe96b16fed90f70746b13f4a4",
       "os": ["netbsd"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/netbsd-arm64/-/netbsd-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/netbsd-x64@0.25.12": {
       "integrity": "77da0d0a0d826d7c921eea3d40292548b258a076",
       "os": ["netbsd"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/netbsd-x64/-/netbsd-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/openbsd-arm64@0.25.12": {
       "integrity": "6296f5867aedef28a81b22ab2009c786a952dccd",
       "os": ["openbsd"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/openbsd-arm64/-/openbsd-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/openbsd-x64@0.25.12": {
       "integrity": "f8d23303360e27b16cf065b23bbff43c14142679",
       "os": ["openbsd"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/openbsd-x64/-/openbsd-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/openharmony-arm64@0.25.12": {
       "integrity": "49e0b768744a3924be0d7fd97dd6ce9b2923d88d",
       "os": ["openharmony"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/openharmony-arm64/-/openharmony-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/sunos-x64@0.25.12": {
       "integrity": "a6ed7d6778d67e528c81fb165b23f4911b9b13d6",
       "os": ["sunos"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/sunos-x64/-/sunos-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@esbuild/win32-arm64@0.25.12": {
       "integrity": "9ac14c378e1b653af17d08e7d3ce34caef587323",
       "os": ["win32"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/win32-arm64/-/win32-arm64-0.25.12.tgz"
+      "cpu": ["arm64"]
     },
     "@esbuild/win32-ia32@0.25.12": {
       "integrity": "918942dcbbb35cc14fca39afb91b5e6a3d127267",
       "os": ["win32"],
-      "cpu": ["ia32"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/win32-ia32/-/win32-ia32-0.25.12.tgz"
+      "cpu": ["ia32"]
     },
     "@esbuild/win32-x64@0.25.12": {
       "integrity": "9bdad8176be7811ad148d1f8772359041f46c6c5",
       "os": ["win32"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@esbuild/win32-x64/-/win32-x64-0.25.12.tgz"
+      "cpu": ["x64"]
     },
     "@napi-rs/lzma-linux-x64-gnu@1.5.1": {
       "integrity": "e57d4306966078662038094fb38eb9146dc3aea9",
       "os": ["linux"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@napi-rs/lzma-linux-x64-gnu/-/lzma-linux-x64-gnu-1.5.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-android-arm-eabi@4.63.1": {
       "integrity": "d03ba6ea54f9ec80688d153763cd325a2d2a5af6",
       "os": ["android"],
-      "cpu": ["arm"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.63.1.tgz"
+      "cpu": ["arm"]
     },
     "@rollup/rollup-android-arm64@4.63.1": {
       "integrity": "db5e36aa8a955b4b5e0b024d671230edc5cdc191",
       "os": ["android"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-darwin-arm64@4.63.1": {
       "integrity": "1ed1c43922e7b9b5d020ef65d8402e3c81edc86e",
       "os": ["darwin"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-darwin-x64@4.63.1": {
       "integrity": "0a86e782bf7a546e74f531e395e24fdb45c83527",
       "os": ["darwin"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-freebsd-arm64@4.63.1": {
       "integrity": "82fa51c540185b5063c8b3c63aac79b15f2801ad",
       "os": ["freebsd"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-freebsd-x64@4.63.1": {
       "integrity": "df1d73b567fd62e0cf21c9b57dff7f44bfd69638",
       "os": ["freebsd"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-linux-arm-gnueabihf@4.63.1": {
       "integrity": "a585ba0418027a5b567693db3982e5e57544a4c7",
       "os": ["linux"],
-      "cpu": ["arm"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.63.1.tgz"
+      "cpu": ["arm"]
     },
     "@rollup/rollup-linux-arm-musleabihf@4.63.1": {
       "integrity": "1326f0db22b690a92efd8eaa06e92268dc7d1bb6",
       "os": ["linux"],
-      "cpu": ["arm"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.63.1.tgz"
+      "cpu": ["arm"]
     },
     "@rollup/rollup-linux-arm64-gnu@4.63.1": {
       "integrity": "9491939f7cc43a5b26a877417faeafe69bac79ac",
       "os": ["linux"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-linux-arm64-musl@4.63.1": {
       "integrity": "a53d93dac32acc671324af1153930ab5a04d8639",
       "os": ["linux"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-linux-loong64-gnu@4.63.1": {
       "integrity": "db6e06173efc870be49a2df692d0c0607417a679",
       "os": ["linux"],
-      "cpu": ["loong64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.63.1.tgz"
+      "cpu": ["loong64"]
     },
     "@rollup/rollup-linux-loong64-musl@4.63.1": {
       "integrity": "a60734a3de407bcf4bfe44d0b64222c0b9fb30bc",
       "os": ["linux"],
-      "cpu": ["loong64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.63.1.tgz"
+      "cpu": ["loong64"]
     },
     "@rollup/rollup-linux-ppc64-gnu@4.63.1": {
       "integrity": "28a67e15d7ba8630ef044980a39626e0627d6e73",
       "os": ["linux"],
-      "cpu": ["ppc64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.63.1.tgz"
+      "cpu": ["ppc64"]
     },
     "@rollup/rollup-linux-ppc64-musl@4.63.1": {
       "integrity": "77bb553a514942af54070756763dbb44c9c6cb2b",
       "os": ["linux"],
-      "cpu": ["ppc64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.63.1.tgz"
+      "cpu": ["ppc64"]
     },
     "@rollup/rollup-linux-riscv64-gnu@4.63.1": {
       "integrity": "ef9f31b917e3b310eac5b86d3b6626df7e543e3d",
       "os": ["linux"],
-      "cpu": ["riscv64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.63.1.tgz"
+      "cpu": ["riscv64"]
     },
     "@rollup/rollup-linux-riscv64-musl@4.63.1": {
       "integrity": "68cf61a2fc02171d1fa62568b73c1d942f82e80c",
       "os": ["linux"],
-      "cpu": ["riscv64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.63.1.tgz"
+      "cpu": ["riscv64"]
     },
     "@rollup/rollup-linux-s390x-gnu@4.63.1": {
       "integrity": "92d393ca47da0d03d1c1cffb3d7340f26c3a53d2",
       "os": ["linux"],
-      "cpu": ["s390x"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.63.1.tgz"
+      "cpu": ["s390x"]
     },
     "@rollup/rollup-linux-x64-gnu@4.63.1": {
       "integrity": "f6e5c5c51f96ae298617fa26da54675acd60e3bc",
       "os": ["linux"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-linux-x64-musl@4.63.1": {
       "integrity": "227a949c481909c781d8a39c280f75553cdd16bc",
       "os": ["linux"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-openbsd-x64@4.63.1": {
       "integrity": "f57241ebdb73d3bc236e7b1252988408b2139c13",
       "os": ["openbsd"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-openharmony-arm64@4.63.1": {
       "integrity": "3a9ffe5af71e8316dd2716b57dd64287a8c1fa0b",
       "os": ["openharmony"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-win32-arm64-msvc@4.63.1": {
       "integrity": "7d4a40396ae79ebc1e3636c1d566c7d1838b800c",
       "os": ["win32"],
-      "cpu": ["arm64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.63.1.tgz"
+      "cpu": ["arm64"]
     },
     "@rollup/rollup-win32-ia32-msvc@4.63.1": {
       "integrity": "f234ab80141da45ebe85727f714eb20de2e72c2a",
       "os": ["win32"],
-      "cpu": ["ia32"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.63.1.tgz"
+      "cpu": ["ia32"]
     },
     "@rollup/rollup-win32-x64-gnu@4.63.1": {
       "integrity": "5d5a664c23c8ff0526b9abd703b50ffe09703c2a",
       "os": ["win32"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@rollup/rollup-win32-x64-msvc@4.63.1": {
       "integrity": "cd19d691330cbd52ebb13620acb6cf7140b95e80",
       "os": ["win32"],
-      "cpu": ["x64"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.63.1.tgz"
+      "cpu": ["x64"]
     },
     "@types/estree@1.0.9": {
-      "integrity": "cf3f0e876d7bee15a93ab925b82bf570a3904a24",
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@types/estree/-/estree-1.0.9.tgz"
+      "integrity": "cf3f0e876d7bee15a93ab925b82bf570a3904a24"
     },
     "esbuild@0.25.12": {
       "integrity": "97a1d041f4ab00c2fce2f838d2b9969a2d2a97a5",
@@ -389,8 +336,7 @@
         "@esbuild/win32-x64"
       ],
       "scripts": true,
-      "bin": true,
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/esbuild/-/esbuild-0.25.12.tgz"
+      "bin": true
     },
     "fdir@6.5.0_picomatch@4.0.7": {
       "integrity": "ed2ab967a331ade62f18d077dae192684d50d350",
@@ -399,26 +345,21 @@
       ],
       "optionalPeers": [
         "picomatch"
-      ],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fdir/-/fdir-6.5.0.tgz"
+      ]
     },
     "fsevents@2.3.3": {
       "integrity": "cac6407785d03675a2a5e1a5305c697b347d90d6",
-      "os": ["darwin"],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/fsevents/-/fsevents-2.3.3.tgz"
+      "os": ["darwin"]
     },
     "nanoid@3.3.18": {
       "integrity": "f66a2de1199ffde0fcf21c8a5f13106b1c081913",
-      "bin": true,
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/nanoid/-/nanoid-3.3.18.tgz"
+      "bin": true
     },
     "picocolors@1.1.1": {
-      "integrity": "3d321af3eab939b083c8f929a1d12cda81c26b6b",
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/picocolors/-/picocolors-1.1.1.tgz"
+      "integrity": "3d321af3eab939b083c8f929a1d12cda81c26b6b"
     },
     "picomatch@4.0.7": {
-      "integrity": "6313360034ccb36b3dc61ecbdff78121f90fe21f",
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/picomatch/-/picomatch-4.0.7.tgz"
+      "integrity": "6313360034ccb36b3dc61ecbdff78121f90fe21f"
     },
     "postcss@8.5.26": {
       "integrity": "6e75135780c7e10df3433bf2266c552d35c8c620",
@@ -426,8 +367,7 @@
         "nanoid",
         "picocolors",
         "source-map-js"
-      ],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/postcss/-/postcss-8.5.26.tgz"
+      ]
     },
     "rollup@4.63.1": {
       "integrity": "a9b96d5b2558d034babb12ad8b67a043bc870ac4",
@@ -463,20 +403,17 @@
         "@rollup/rollup-win32-x64-msvc",
         "fsevents"
       ],
-      "bin": true,
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/rollup/-/rollup-4.63.1.tgz"
+      "bin": true
     },
     "source-map-js@1.2.1": {
-      "integrity": "1ce5650fddd87abc099eda37dcff024c2667ae46",
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/source-map-js/-/source-map-js-1.2.1.tgz"
+      "integrity": "1ce5650fddd87abc099eda37dcff024c2667ae46"
     },
     "tinyglobby@0.2.17": {
       "integrity": "562a9a6c9eb2b3b123d39719f9af5bb44fcd7631",
       "dependencies": [
         "fdir",
         "picomatch"
-      ],
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/tinyglobby/-/tinyglobby-0.2.17.tgz"
+      ]
     },
     "vite@6.3.5": {
       "integrity": "fec73879013c9c0128c8d284504c6d19410d12a3",
@@ -491,8 +428,7 @@
       "optionalDependencies": [
         "fsevents"
       ],
-      "bin": true,
-      "tarball": "https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/vite/-/vite-6.3.5.tgz"
+      "bin": true
     }
   },
   "remote": {
@@ -500,7 +436,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@timepp/dui@0.4.2"
+      "jsr:@timepp/dui@0.4.4"
     ]
   }
 }

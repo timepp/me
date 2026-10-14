@@ -10,6 +10,8 @@ export const apiImpl: BackendAPI = {
     addCommand: command => commandManager.addCommand(command),
     updateCommand: (id, command) => commandManager.updateCommand(id, command),
     deleteCommand: id => commandManager.deleteCommand(id),
+    runConfiguredCommand: (id, getUserInput) =>
+        commandManager.runCommand(id, getUserInput),
     getMyselfDir: async function () {
         const myPath = new URL(import.meta.url).pathname
         // /D:/src/me/api-impl.ts => D:\src\me
@@ -154,11 +156,4 @@ export const apiImpl: BackendAPI = {
         // Implement the logic to remove a OneAuth account by ID
         return await removeOneAuthAccount(id)
     },
-}
-
-if (import.meta.main) {
-    // For testing purposes, you can call the API methods here
-
-    //console.log(await apiImpl.getLocalPortInfo(1080))
-    apiImpl.openDirWithCode(`%OneDrive%\\Arch`)
 }

@@ -1,3 +1,8 @@
+import { executeCommand } from './commands/execute-command.ts'
+import type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
+
+export type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
+
 export type CommandType =
     | 'url'
     | 'terminal'
@@ -149,6 +154,29 @@ export class CommandManager {
             }
             commands.splice(index, 1)
         })
+    }
+
+    async runCommand(
+        id: string,
+        getUserInput: GetUserInput,
+    ): Promise<CommandExecutionResult[]> {
+        const parsedId = requireGuid(id, 'id')
+        const commands = await this.readCommands()
+        const commandsById = new Map(
+            commands.map((command) => [command.id, command]),
+        )
+        const runCommandById = async (
+            commandId: string,
+        ): Promise<CommandExecutionResult[]> => {
+            const command = commandsById.get(commandId)
+            if (!command) throw new Error(`Command not found: ${commandId}`)
+            return await executeCommand(command, {
+                getUserInput,
+                runCommandById,
+                commandsById,
+            })
+        }
+        return await runCommandById(parsedId)
     }
 
     private async mutate(

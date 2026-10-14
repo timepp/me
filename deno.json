@@ -4,9 +4,10 @@
   "license": "MIT",
   "exports": "./app.ts",
   "imports": {
-    "@timepp/dui": "jsr:@timepp/dui@0.4.2"
+    "@timepp/dui": "jsr:@timepp/dui@0.4.4"
   },
   "tasks": {
+    "cli": "deno run -A cli.ts",
     "install:uu": "deno install --config uu/deno.json --node-modules-dir=auto --no-lock"
   },
   "minimumDependencyAge": 0,
