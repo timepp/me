@@ -1,5 +1,6 @@
 import type { CommandConfig } from '../command.ts'
 import type { OneAuthInfo } from '../lib/oneauth.ts'
+import type { CommandStatus } from './status.ts'
 
 export type GetUserInput = (
     topic: string,
@@ -20,9 +21,17 @@ export type OneAuthCommandResult = {
     accounts: OneAuthInfo[]
 }
 
+export type StatusCommandResult = {
+    type: 'status'
+    commandId: string
+    title: string
+    status: CommandStatus
+}
+
 export type CommandExecutionResult =
     | MessageCommandResult
     | OneAuthCommandResult
+    | StatusCommandResult
 
 export type CommandExecutionContext = {
     getUserInput: GetUserInput

@@ -9,6 +9,10 @@ import type {
     CommandExecutionResult,
 } from './types.ts'
 import { runUrlCommand } from './url-command.ts'
+import {
+    getWindowsCommandStatus,
+    runWindowsCommand,
+} from './windows-command.ts'
 
 export async function executeCommand(
     command: CommandConfig,
@@ -30,5 +34,19 @@ export async function executeCommand(
             return [await runOneAuthCommand(command)]
         case 'compound':
             return await runCompoundCommand(command, context)
+        case 'registry':
+        case 'pathEntry':
+        case 'scheduledTask':
+        case 'shortcut':
+        case 'junction':
+        case 'fileContent':
+        case 'powerShell':
+            await runWindowsCommand(command)
+            return [{
+                type: 'status',
+                commandId: command.id,
+                title: command.name,
+                status: await getWindowsCommandStatus(command),
+            }]
     }
 }

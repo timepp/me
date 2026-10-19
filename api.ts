@@ -3,6 +3,7 @@ import type {
     CommandConfig,
     CommandDraft,
     CommandExecutionResult,
+    CommandStatus,
     GetUserInput,
 } from './command.ts'
 import type { OneAuthInfo } from './lib/oneauth.ts'
@@ -11,6 +12,7 @@ export type {
     CommandConfig,
     CommandDraft,
     CommandExecutionResult,
+    CommandStatus,
     GetUserInput,
 } from './command.ts'
 export type { OneAuthInfo } from './lib/oneauth.ts'
@@ -44,6 +46,7 @@ export interface BackendAPI {
         id: string,
         getUserInput: GetUserInput,
     ): Promise<CommandExecutionResult[]>
+    getCommandStatus(id: string): Promise<CommandStatus>
 
     getNetworkInfo(name: string): Promise<NetworkInfo[]>
     runCommand(command: string, params: string[]): Promise<string>

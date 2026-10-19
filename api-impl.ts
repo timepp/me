@@ -12,6 +12,7 @@ export const apiImpl: BackendAPI = {
     deleteCommand: id => commandManager.deleteCommand(id),
     runConfiguredCommand: (id, getUserInput) =>
         commandManager.runCommand(id, getUserInput),
+    getCommandStatus: id => commandManager.getCommandStatus(id),
     getMyselfDir: async function () {
         const myPath = new URL(import.meta.url).pathname
         // /D:/src/me/api-impl.ts => D:\src\me

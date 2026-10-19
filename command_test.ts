@@ -1,4 +1,5 @@
 import { CommandManager, parseCommandConfigs } from './command.ts'
+import { getWindowsCommandStatus } from './commands/windows-command.ts'
 import {
     filterCommandsByName,
     resolveCommandSelection,
@@ -227,6 +228,60 @@ Deno.test('CLI summarizes OneAuth accounts without verbose fields', () => {
     )
 })
 
+Deno.test('Windows configuration commands expose status', async () => {
+    const status = await getWindowsCommandStatus({
+        id: firstId,
+        type: 'powerShell',
+        name: 'Status test',
+        applyScript: 'Write-Output applied',
+        statusScript: 'Write-Output $true',
+    })
+    assert(
+        status.state === 'satisfied',
+        'a true PowerShell status should be satisfied',
+    )
+
+    const unknownStatus = await getWindowsCommandStatus({
+        id: secondId,
+        type: 'powerShell',
+        name: 'No status test',
+        applyScript: 'Write-Output applied',
+    })
+    assert(
+        unknownStatus.state === 'unknown',
+        'a command without a status script should be unknown',
+    )
+})
+
+Deno.test('configuration command returns its status after running', async () => {
+    const directory = await Deno.makeTempDir()
+    const path = `${directory}\\commands.json`
+    await Deno.writeTextFile(
+        path,
+        JSON.stringify([{
+            id: firstId,
+            type: 'powerShell',
+            name: 'Apply test',
+            applyScript: 'Write-Output applied',
+            statusScript: 'Write-Output $true',
+        }]),
+    )
+    try {
+        const results = await new CommandManager(path).runCommand(
+            firstId,
+            () => Promise.resolve(undefined),
+        )
+        assert(
+            results.length === 1 &&
+                results[0].type === 'status' &&
+                results[0].status.state === 'satisfied',
+            'configuration execution should return its resulting status',
+        )
+    } finally {
+        await Deno.remove(directory, { recursive: true })
+    }
+})
+
 Deno.test('CommandManager runs message and chosen compound commands', async () => {
     const directory = await Deno.makeTempDir()
     const path = `${directory}\\commands.json`
@@ -312,8 +367,17 @@ Deno.test('commands.json preserves original commands with GUID ids', async () =>
     ) {
         assert(names.has(name), `commands.json should preserve "${name}"`)
     }
-    assert(
-        commands.length === 26,
-        'nested commands should be normalized into 26 commands',
-    )
+    for (
+        const name of [
+            'Autostart handyrun',
+            'Explorer view settings',
+            'Legacy development PATH entries',
+            'Disable automatic folder type discovery',
+            'Font Link fallback',
+            'Outlook URL protocol',
+            'Ubuntu on Windows setup',
+        ]
+    ) {
+        assert(names.has(name), `commands.json should migrate "${name}"`)
+    }
 })

@@ -9,7 +9,8 @@ import { showOneAuthAccounts } from './components/one-auth-manager.ts'
 import * as uu from './uu.ts'
 
 type CommandType = CommandDraft['type']
-type CommandStatus = 'unknown' | 'yes' | 'no'
+type StatusDisplay = 'unknown' | 'satisfied' | 'unsatisfied' | 'error'
+type CachedStatus = StatusDisplay | 'refreshing'
 
 const commandTypes: CommandType[] = [
     'url',
@@ -18,7 +19,28 @@ const commandTypes: CommandType[] = [
     'message',
     'oneAuth',
     'compound',
+    'registry',
+    'pathEntry',
+    'scheduledTask',
+    'shortcut',
+    'junction',
+    'fileContent',
+    'powerShell',
 ]
+
+const configurationCommandTypes: CommandType[] = [
+    'registry',
+    'pathEntry',
+    'scheduledTask',
+    'shortcut',
+    'junction',
+    'fileContent',
+    'powerShell',
+]
+
+function isConfigurationCommandType(type: CommandType): boolean {
+    return configurationCommandTypes.includes(type)
+}
 
 function createButton(
     label: string,
@@ -115,6 +137,64 @@ function toDraft(command: CommandConfig): CommandDraft {
                 mode: command.mode,
                 subCommandIds: [...command.subCommandIds],
             }
+        case 'registry':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                values: command.values,
+            }
+        case 'pathEntry':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                entries: command.entries,
+            }
+        case 'scheduledTask':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                taskName: command.taskName,
+                executable: command.executable,
+                args: command.args,
+                runLevel: command.runLevel,
+            }
+        case 'shortcut':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                path: command.path,
+                target: command.target,
+                args: command.args,
+            }
+        case 'junction':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                path: command.path,
+                target: command.target,
+            }
+        case 'fileContent':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                path: command.path,
+                marker: command.marker,
+                content: command.content,
+            }
+        case 'powerShell':
+            return {
+                ...common,
+                type: command.type,
+                elevated: command.elevated,
+                applyScript: command.applyScript,
+                statusScript: command.statusScript,
+            }
     }
 }
 
@@ -169,34 +249,97 @@ function commandDetails(
                 getSubCommands(command, commandsById).map((item) => item.name)
                     .join(', ')
             }`
+        case 'registry':
+            return `${command.values.length} registry value(s)`
+        case 'pathEntry':
+            return command.entries.join('; ')
+        case 'scheduledTask':
+            return `${command.taskName}: ${command.executable}`
+        case 'shortcut':
+            return `${command.path} -> ${command.target}`
+        case 'junction':
+            return `${command.path} -> ${command.target}`
+        case 'fileContent':
+            return `${command.path}: ${command.marker}`
+        case 'powerShell':
+            return command.elevated ? 'Elevated PowerShell' : 'PowerShell'
     }
 }
 
 function hasStatus(command: CommandConfig): boolean {
-    return command.type === 'terminal' && command.statusPort !== undefined
+    return command.type === 'terminal' ? command.statusPort !== undefined : [
+        'registry',
+        'pathEntry',
+        'scheduledTask',
+        'shortcut',
+        'junction',
+        'fileContent',
+        'powerShell',
+    ].includes(command.type)
 }
 
 async function getCommandStatus(
     command: CommandConfig,
-): Promise<CommandStatus> {
-    if (command.type !== 'terminal' || command.statusPort === undefined) {
-        return 'unknown'
-    }
-    const portInfo = await api.getLocalPortInfo(command.statusPort)
-    return portInfo.isOpen ? 'yes' : 'no'
+): Promise<StatusDisplay> {
+    return (await api.getCommandStatus(command.id)).state
 }
 
-function updateStatus(
-    element: HTMLElement,
-    status: CommandStatus | 'running',
-): void {
-    if (status === 'running') {
-        element.textContent = ''
-        element.className = 'loader'
-        return
+function formatStatus(status: CachedStatus): string {
+    return status === 'refreshing'
+        ? ''
+        : status === 'satisfied'
+        ? '✅'
+        : status === 'unsatisfied'
+        ? '❌'
+        : status === 'error'
+        ? '⚠️'
+        : ''
+}
+
+function statusSortingValue(status: CachedStatus): number {
+    switch (status) {
+        case 'satisfied':
+            return 0
+        case 'unsatisfied':
+            return 1
+        case 'error':
+            return 2
+        case 'unknown':
+            return 3
+        case 'refreshing':
+            return 4
     }
-    element.className = ''
-    element.textContent = status === 'yes' ? '✅' : status === 'no' ? '❌' : ''
+}
+
+function updateStatusElement(
+    element: HTMLElement,
+    status: CachedStatus,
+): void {
+    element.textContent = formatStatus(status)
+    element.className = status === 'refreshing' ? 'loader' : ''
+}
+
+async function mapWithConcurrency<T, R>(
+    items: T[],
+    concurrency: number,
+    mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+    const results = new Array<R>(items.length)
+    let nextIndex = 0
+    const worker = async () => {
+        while (true) {
+            const index = nextIndex++
+            if (index >= items.length) return
+            results[index] = await mapper(items[index])
+        }
+    }
+    await Promise.all(
+        Array.from(
+            { length: Math.min(concurrency, items.length) },
+            worker,
+        ),
+    )
+    return results
 }
 
 const getUserInput: GetUserInput = async (
@@ -262,6 +405,12 @@ async function showCommandResult(
         }
         case 'oneAuth':
             await showOneAuthAccounts(result.accounts, result.title)
+            return
+        case 'status':
+            console.log(
+                `${result.title}: ${result.status.state}`,
+                result.status.message ?? '',
+            )
     }
 }
 
@@ -271,6 +420,9 @@ async function showCommandDialog(
     initial?: CommandDraft,
     editingId?: string,
 ): Promise<CommandDraft | null> {
+    if (isConfigurationCommandType(type)) {
+        return await showConfigurationCommandDialog(type, initial)
+    }
     const content = document.createElement('div')
     content.className = 'command-form'
 
@@ -345,6 +497,73 @@ async function showCommandDialog(
             { required: true, multiline: true },
         )
         content.append(messageInput.parentElement!)
+    }
+
+    async function showConfigurationCommandDialog(
+        type: CommandType,
+        initial?: CommandDraft,
+    ): Promise<CommandDraft | null> {
+        const content = document.createElement('div')
+        content.className = 'command-form'
+        const nameInput = createField('Name', initial?.name, { required: true })
+        const descriptionInput = createField(
+            'Description',
+            initial?.description,
+            { multiline: true },
+        )
+        const tagsInput = createField(
+            'Tags (comma separated)',
+            initial?.tags?.join(', '),
+        )
+        const config = initial ? structuredClone(initial) : { type }
+        delete (config as Partial<CommandDraft>).name
+        delete (config as Partial<CommandDraft>).description
+        delete (config as Partial<CommandDraft>).tags
+        delete (config as Partial<CommandDraft>).type
+        const configInput = createField(
+            'Type-specific JSON',
+            JSON.stringify(config, null, 4),
+            { required: true, multiline: true },
+        )
+        content.append(
+            nameInput.parentElement!,
+            descriptionInput.parentElement!,
+            tagsInput.parentElement!,
+            configInput.parentElement!,
+        )
+
+        let result: CommandDraft | null = null
+        await uu.showInDialog(
+            `${initial ? 'Edit' : 'Add'} ${type} command`,
+            content,
+            {
+                Save: () => {
+                    try {
+                        result = {
+                            ...JSON.parse(configInput.value),
+                            type,
+                            name: nameInput.value.trim(),
+                            description: descriptionInput.value.trim() ||
+                                undefined,
+                            tags: tagsInput.value.split(',').map((tag) =>
+                                tag.trim()
+                            )
+                                .filter(Boolean),
+                        }
+                        return true
+                    } catch (error) {
+                        alert(
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
+                        )
+                        return false
+                    }
+                },
+                Cancel: () => true,
+            },
+        )
+        return result
     }
 
     const selectedCommandIds = new Set(
@@ -500,8 +719,14 @@ async function main(): Promise<void> {
     const root = document.createElement('main')
     root.className = 'command-manager'
     document.body.append(root)
-    const statusElements = new Map<string, HTMLElement>()
+    const toolbar = document.createElement('div')
+    toolbar.className = 'command-toolbar'
+    root.append(toolbar)
+    let visualization: HTMLElement | undefined
+    const statusCache = new Map<string, CachedStatus>()
+    let commands: CommandConfig[] = []
     let commandsById = new Map<string, CommandConfig>()
+    let loadGeneration = 0
 
     const run = async (command: CommandConfig) => {
         try {
@@ -510,18 +735,15 @@ async function main(): Promise<void> {
                 getUserInput,
             )
             for (const result of results) await showCommandResult(result)
-            if (!hasStatus(command)) return
-            const element = statusElements.get(command.id)
-            if (!element) return
-            updateStatus(element, 'running')
-            for (let attempt = 0; attempt < 10; attempt++) {
-                await new Promise((resolve) => setTimeout(resolve, 1000))
-                if (await getCommandStatus(command) === 'yes') {
-                    updateStatus(element, 'yes')
-                    return
-                }
+            const statusResult = results.find((result) =>
+                result.type === 'status' && result.commandId === command.id
+            )
+            if (statusResult?.type === 'status') {
+                statusCache.set(command.id, statusResult.status.state)
+                renderVisualization()
+            } else if (hasStatus(command)) {
+                await refreshStatus(command)
             }
-            updateStatus(element, 'no')
         } catch (error) {
             alert(
                 `Failed to run command: ${
@@ -530,34 +752,15 @@ async function main(): Promise<void> {
             )
         }
     }
-
-    const renderCommands = async () => {
-        const commands = await api.getCommands()
-        commandsById = new Map(commands.map((command) => [command.id, command]))
-        const toolbar = document.createElement('div')
-        toolbar.className = 'command-toolbar'
-
-        for (const type of commandTypes) {
-            toolbar.append(createButton(`Add ${type}`, async () => {
-                const draft = await showCommandDialog(type, commands)
-                if (!draft) return
-                try {
-                    await api.addCommand(draft)
-                    await renderCommands()
-                } catch (error) {
-                    alert(
-                        `Failed to add command: ${
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                        }`,
-                    )
-                }
-            }))
-        }
-
-        const table = uu.visualizeArray(commands, {
+    const renderVisualization = () => {
+        const rows = commands.map((command) => ({
+            ...command,
+            status: statusCache.get(command.id) ?? 'unknown',
+        }))
+        const table = uu.visualizeArray(rows, {
             renderStyles: ['table', 'tile'],
+            getSortingValue: (item, prop) =>
+                prop === 'status' ? statusSortingValue(item.status) : undefined,
             renderOption: {
                 props: [
                     'type',
@@ -577,12 +780,7 @@ async function main(): Promise<void> {
                     status: {
                         formatter: (item) => {
                             const element = document.createElement('span')
-                            statusElements.set(item.id, element)
-                            if (hasStatus(item)) {
-                                void getCommandStatus(item).then((status) =>
-                                    updateStatus(element, status)
-                                )
-                            }
+                            updateStatusElement(element, item.status)
                             return element
                         },
                     },
@@ -605,7 +803,7 @@ async function main(): Promise<void> {
                         if (!draft) return
                         try {
                             await api.updateCommand(item.id, draft)
-                            await renderCommands()
+                            await loadCommands()
                         } catch (error) {
                             alert(
                                 `Failed to update command: ${
@@ -620,7 +818,7 @@ async function main(): Promise<void> {
                         if (!confirm(`Delete command "${item.name}"?`)) return
                         try {
                             await api.deleteCommand(item.id)
-                            await renderCommands()
+                            await loadCommands()
                         } catch (error) {
                             alert(
                                 `Failed to delete command: ${
@@ -634,13 +832,7 @@ async function main(): Promise<void> {
                 }
                 if (hasStatus(item)) {
                     actions['Refresh Status'] = async () => {
-                        const element = statusElements.get(item.id)
-                        if (element) {
-                            updateStatus(
-                                element,
-                                await getCommandStatus(item),
-                            )
-                        }
+                        await refreshStatus(item)
                     }
                 }
                 return actions
@@ -649,11 +841,80 @@ async function main(): Promise<void> {
             rawIndexProp: '#',
             stateKey: 'MyEnvCommands',
         })
-        root.replaceChildren(toolbar, table)
+        if (visualization) visualization.replaceWith(table)
+        else root.append(table)
+        visualization = table
+    }
+
+    const refreshStatus = async (command: CommandConfig): Promise<void> => {
+        try {
+            statusCache.set(command.id, await getCommandStatus(command))
+        } catch {
+            statusCache.set(command.id, 'error')
+        }
+        renderVisualization()
+    }
+
+    const refreshAllStatuses = async (generation: number): Promise<void> => {
+        const commandSnapshot = [...commands]
+        const statuses = await mapWithConcurrency(
+            commandSnapshot,
+            5,
+            async (command): Promise<[string, CachedStatus]> => {
+                if (!hasStatus(command)) return [command.id, 'unknown']
+                try {
+                    return [command.id, await getCommandStatus(command)]
+                } catch {
+                    return [command.id, 'error']
+                }
+            },
+        )
+        if (generation !== loadGeneration) return
+        statusCache.clear()
+        for (const [id, status] of statuses) statusCache.set(id, status)
+        renderVisualization()
+    }
+
+    const loadCommands = async (refreshStatuses = false): Promise<void> => {
+        const generation = ++loadGeneration
+        commands = await api.getCommands()
+        commandsById = new Map(commands.map((command) => [command.id, command]))
+        const previousStatuses = new Map(statusCache)
+        statusCache.clear()
+        for (const command of commands) {
+            const previousStatus = previousStatuses.get(command.id)
+            statusCache.set(
+                command.id,
+                refreshStatuses && hasStatus(command)
+                    ? 'refreshing'
+                    : previousStatus === 'refreshing'
+                    ? 'unknown'
+                    : previousStatus ?? 'unknown',
+            )
+        }
+        renderVisualization()
+        if (refreshStatuses) void refreshAllStatuses(generation)
+    }
+
+    for (const type of commandTypes) {
+        toolbar.append(createButton(`Add ${type}`, async () => {
+            const draft = await showCommandDialog(type, commands)
+            if (!draft) return
+            try {
+                await api.addCommand(draft)
+                await loadCommands()
+            } catch (error) {
+                alert(
+                    `Failed to add command: ${
+                        error instanceof Error ? error.message : String(error)
+                    }`,
+                )
+            }
+        }))
     }
 
     try {
-        await renderCommands()
+        await loadCommands(true)
     } catch (error) {
         root.textContent = `Failed to load commands: ${
             error instanceof Error ? error.message : String(error)

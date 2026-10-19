@@ -72,14 +72,10 @@ const getUserInput: GetUserInput = (
     allowFreeString,
 ) => {
     console.log(topic)
-    choices?.forEach((choice, index) =>
-        console.log(`${index + 1}. ${choice}`)
-    )
+    choices?.forEach((choice, index) => console.log(`${index + 1}. ${choice}`))
 
     const answer = prompt(
-        choices?.length
-            ? 'Enter a choice number or value:'
-            : 'Enter a value:',
+        choices?.length ? 'Enter a choice number or value:' : 'Enter a value:',
     )?.trim()
     if (!answer) return Promise.resolve(undefined)
 
@@ -107,12 +103,27 @@ function showCommandResult(result: CommandExecutionResult): void {
         case 'oneAuth':
             console.log(`\n${result.title}`)
             console.table(summarizeOneAuthAccounts(result.accounts))
+            return
+        case 'status':
+            console.log(
+                `${result.title}: ${result.status.state}${
+                    result.status.message ? ` - ${result.status.message}` : ''
+                }`,
+            )
     }
 }
 
-function listCommands(commands: CommandConfig[]): void {
+async function listCommands(commands: CommandConfig[]): Promise<void> {
+    const statuses = await Promise.all(
+        commands.map((command) => apiImpl.getCommandStatus(command.id)),
+    )
     console.table(
-        commands.map(({ id, name, type }) => ({ id, name, type })),
+        commands.map(({ id, name, type }, index) => ({
+            id,
+            name,
+            type,
+            status: statuses[index].state,
+        })),
     )
 }
 
@@ -132,7 +143,7 @@ async function executeCommand(commandId: string): Promise<void> {
 }
 
 async function runInteractive(commands: CommandConfig[]): Promise<void> {
-    listCommands(commands)
+    await listCommands(commands)
     while (true) {
         const filter = prompt('Filter commands by name:')?.trim()
         if (filter === undefined) return
@@ -176,7 +187,7 @@ export async function runCli(args: string[]): Promise<void> {
             if (args.length !== 1) {
                 throw new Error('--list does not accept additional arguments')
             }
-            listCommands(commands)
+            await listCommands(commands)
             return
         case '--run':
             if (args.length !== 2) {

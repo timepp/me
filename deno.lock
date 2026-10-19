@@ -432,7 +432,7 @@
     }
   },
   "remote": {
-    "https://esm.sh/jsr/@timepp/uu@1.0.22/cdn": "cb8d9c1c3aceaa40096d36ab3fc35a40a338493c9bff28a9fcaf57f76dd9c82a"
+    "https://esm.sh/jsr/@timepp/uu@1.0.29/cdn": "19f78840d435da53997d496f038b185f4431fc4fb68d21463d885f649f81e61e"
   },
   "workspace": {
     "dependencies": [

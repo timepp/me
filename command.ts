@@ -1,7 +1,10 @@
 import { executeCommand } from './commands/execute-command.ts'
+import { getCommandStatus } from './commands/get-command-status.ts'
+import type { CommandStatus } from './commands/status.ts'
 import type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
 
 export type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
+export type { CommandStatus } from './commands/status.ts'
 
 export type CommandType =
     | 'url'
@@ -10,6 +13,13 @@ export type CommandType =
     | 'message'
     | 'oneAuth'
     | 'compound'
+    | 'registry'
+    | 'pathEntry'
+    | 'scheduledTask'
+    | 'shortcut'
+    | 'junction'
+    | 'fileContent'
+    | 'powerShell'
 
 type CommandBase = {
     id: string
@@ -51,6 +61,60 @@ export type CompoundCommandConfig = CommandBase & {
     subCommandIds: string[]
 }
 
+type StatusCommandBase = CommandBase & {
+    elevated?: boolean
+}
+
+export type RegistryValue = {
+    key: string
+    name?: string
+    value: string | number | string[]
+}
+
+export type RegistryCommandConfig = StatusCommandBase & {
+    type: 'registry'
+    values: RegistryValue[]
+}
+
+export type PathEntryCommandConfig = StatusCommandBase & {
+    type: 'pathEntry'
+    entries: string[]
+}
+
+export type ScheduledTaskCommandConfig = StatusCommandBase & {
+    type: 'scheduledTask'
+    taskName: string
+    executable: string
+    args: string[]
+    runLevel: 'normal' | 'highest'
+}
+
+export type ShortcutCommandConfig = StatusCommandBase & {
+    type: 'shortcut'
+    path: string
+    target: string
+    args?: string
+}
+
+export type JunctionCommandConfig = StatusCommandBase & {
+    type: 'junction'
+    path: string
+    target: string
+}
+
+export type FileContentCommandConfig = StatusCommandBase & {
+    type: 'fileContent'
+    path: string
+    marker: string
+    content: string
+}
+
+export type PowerShellCommandConfig = StatusCommandBase & {
+    type: 'powerShell'
+    applyScript: string
+    statusScript?: string
+}
+
 export type CommandConfig =
     | UrlCommandConfig
     | TerminalCommandConfig
@@ -58,6 +122,13 @@ export type CommandConfig =
     | MessageCommandConfig
     | OneAuthCommandConfig
     | CompoundCommandConfig
+    | RegistryCommandConfig
+    | PathEntryCommandConfig
+    | ScheduledTaskCommandConfig
+    | ShortcutCommandConfig
+    | JunctionCommandConfig
+    | FileContentCommandConfig
+    | PowerShellCommandConfig
 
 type CommandDraftBase = Omit<CommandBase, 'id'>
 
@@ -94,6 +165,14 @@ export type CompoundCommandDraft = CommandDraftBase & {
     subCommandIds: string[]
 }
 
+export type RegistryCommandDraft = Omit<RegistryCommandConfig, 'id'>
+export type PathEntryCommandDraft = Omit<PathEntryCommandConfig, 'id'>
+export type ScheduledTaskCommandDraft = Omit<ScheduledTaskCommandConfig, 'id'>
+export type ShortcutCommandDraft = Omit<ShortcutCommandConfig, 'id'>
+export type JunctionCommandDraft = Omit<JunctionCommandConfig, 'id'>
+export type FileContentCommandDraft = Omit<FileContentCommandConfig, 'id'>
+export type PowerShellCommandDraft = Omit<PowerShellCommandConfig, 'id'>
+
 export type CommandDraft =
     | UrlCommandDraft
     | TerminalCommandDraft
@@ -101,6 +180,13 @@ export type CommandDraft =
     | MessageCommandDraft
     | OneAuthCommandDraft
     | CompoundCommandDraft
+    | RegistryCommandDraft
+    | PathEntryCommandDraft
+    | ScheduledTaskCommandDraft
+    | ShortcutCommandDraft
+    | JunctionCommandDraft
+    | FileContentCommandDraft
+    | PowerShellCommandDraft
 
 export class CommandManager {
     private mutationQueue: Promise<void> = Promise.resolve()
@@ -179,6 +265,14 @@ export class CommandManager {
         return await runCommandById(parsedId)
     }
 
+    async getCommandStatus(id: string): Promise<CommandStatus> {
+        const parsedId = requireGuid(id, 'id')
+        const commands = await this.readCommands()
+        const command = commands.find((item) => item.id === parsedId)
+        if (!command) throw new Error(`Command not found: ${parsedId}`)
+        return await getCommandStatus(command)
+    }
+
     private async mutate(
         change: (commands: CommandConfig[]) => void,
     ): Promise<void> {
@@ -253,6 +347,7 @@ function parseCommandValue(
         `${path}.description`,
     )
     const tags = optionalStringArray(record.tags, `${path}.tags`)
+    const elevated = optionalBoolean(record.elevated, `${path}.elevated`)
     const type = requireString(record.type, `${path}.type`)
     const common = { ...(id ? { id } : {}), name, description, tags }
 
@@ -301,9 +396,79 @@ function parseCommandValue(
                     `${path}.subCommandIds`,
                 ),
             } as CompoundCommandConfig | CompoundCommandDraft
+        case 'registry':
+            return {
+                ...common,
+                type,
+                elevated,
+                values: requireRegistryValues(record.values, `${path}.values`),
+            } as RegistryCommandConfig | RegistryCommandDraft
+        case 'pathEntry':
+            return {
+                ...common,
+                type,
+                elevated,
+                entries: requireStringArray(record.entries, `${path}.entries`),
+            } as PathEntryCommandConfig | PathEntryCommandDraft
+        case 'scheduledTask':
+            return {
+                ...common,
+                type,
+                elevated,
+                taskName: requireString(record.taskName, `${path}.taskName`),
+                executable: requireString(
+                    record.executable,
+                    `${path}.executable`,
+                ),
+                args: requireStringArray(record.args, `${path}.args`),
+                runLevel: requireRunLevel(
+                    record.runLevel,
+                    `${path}.runLevel`,
+                ),
+            } as ScheduledTaskCommandConfig | ScheduledTaskCommandDraft
+        case 'shortcut':
+            return {
+                ...common,
+                type,
+                elevated,
+                path: requireString(record.path, `${path}.path`),
+                target: requireString(record.target, `${path}.target`),
+                args: optionalString(record.args, `${path}.args`),
+            } as ShortcutCommandConfig | ShortcutCommandDraft
+        case 'junction':
+            return {
+                ...common,
+                type,
+                elevated,
+                path: requireString(record.path, `${path}.path`),
+                target: requireString(record.target, `${path}.target`),
+            } as JunctionCommandConfig | JunctionCommandDraft
+        case 'fileContent':
+            return {
+                ...common,
+                type,
+                elevated,
+                path: requireString(record.path, `${path}.path`),
+                marker: requireString(record.marker, `${path}.marker`),
+                content: requireString(record.content, `${path}.content`),
+            } as FileContentCommandConfig | FileContentCommandDraft
+        case 'powerShell':
+            return {
+                ...common,
+                type,
+                elevated,
+                applyScript: requireString(
+                    record.applyScript,
+                    `${path}.applyScript`,
+                ),
+                statusScript: optionalString(
+                    record.statusScript,
+                    `${path}.statusScript`,
+                ),
+            } as PowerShellCommandConfig | PowerShellCommandDraft
         default:
             throw new TypeError(
-                `${path}.type must be "url", "terminal", "code", "message", "oneAuth", or "compound"`,
+                `${path}.type is not supported`,
             )
     }
 }
@@ -399,6 +564,33 @@ function optionalStringArray(
     return requireStringArray(value, path)
 }
 
+function optionalBoolean(value: unknown, path: string): boolean | undefined {
+    if (value === undefined) return undefined
+    if (typeof value !== 'boolean') {
+        throw new TypeError(`${path} must be boolean`)
+    }
+    return value
+}
+
+function requireRegistryValues(value: unknown, path: string): RegistryValue[] {
+    if (!Array.isArray(value)) throw new TypeError(`${path} must be an array`)
+    return value.map((item, index) => {
+        const itemPath = `${path}[${index}]`
+        const record = requireRecord(item, itemPath)
+        const rawValue = record.value
+        const parsedValue = typeof rawValue === 'number'
+            ? rawValue
+            : Array.isArray(rawValue)
+            ? requireStringArray(rawValue, `${itemPath}.value`)
+            : requireString(rawValue, `${itemPath}.value`)
+        return {
+            key: requireString(record.key, `${itemPath}.key`),
+            name: optionalString(record.name, `${itemPath}.name`),
+            value: parsedValue,
+        }
+    })
+}
+
 function requireStringArray(value: unknown, path: string): string[] {
     if (!Array.isArray(value)) throw new TypeError(`${path} must be an array`)
     return value.map((item, index) => requireString(item, `${path}[${index}]`))
@@ -423,6 +615,13 @@ function optionalPort(value: unknown, path: string): number | undefined {
 function requireCompoundMode(value: unknown, path: string): 'all' | 'choose' {
     if (value !== 'all' && value !== 'choose') {
         throw new TypeError(`${path} must be "all" or "choose"`)
+    }
+    return value
+}
+
+function requireRunLevel(value: unknown, path: string): 'normal' | 'highest' {
+    if (value !== 'normal' && value !== 'highest') {
+        throw new TypeError(`${path} must be "normal" or "highest"`)
     }
     return value
 }
