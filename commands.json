@@ -492,5 +492,16 @@
         "path": "%LOCALAPPDATA%\\lxss\\home\\timepp\\.bashrc",
         "marker": "/mnt/c/Users/idtong/OneDrive/softconf/mybash.sh",
         "content": ". \"/mnt/c/Users/idtong/OneDrive/softconf/mybash.sh\""
+    },
+    {
+        "id": "50c64c60-0877-450d-aa35-09eb6b01eba9",
+        "name": "Trips ff26",
+        "description": "Trips test tenant",
+        "tags": [
+            "MTO"
+        ],
+        "type": "url",
+        "url": "https://admin.microsoft.com/?login_hint=admin@a830edad9050849tLDX90cDJzRP.onmicrosoft.com",
+        "profile": "Profile 5"
     }
 ]
