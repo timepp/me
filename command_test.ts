@@ -96,6 +96,7 @@ Deno.test('CommandManager persists GUID commands and compound references', async
             'concurrent additions should both be persisted',
         )
     } finally {
+        manager.close()
         await Deno.remove(directory, { recursive: true })
     }
 })
@@ -266,8 +267,9 @@ Deno.test('configuration command returns its status after running', async () => 
             statusScript: 'Write-Output $true',
         }]),
     )
+    const manager = new CommandManager(path)
     try {
-        const results = await new CommandManager(path).runCommand(
+        const results = await manager.runCommand(
             firstId,
             () => Promise.resolve(undefined),
         )
@@ -278,6 +280,7 @@ Deno.test('configuration command returns its status after running', async () => 
             'configuration execution should return its resulting status',
         )
     } finally {
+        manager.close()
         await Deno.remove(directory, { recursive: true })
     }
 })
@@ -335,6 +338,7 @@ Deno.test('CommandManager runs message and chosen compound commands', async () =
             'message command should return content for the caller to render',
         )
     } finally {
+        manager.close()
         await Deno.remove(directory, { recursive: true })
     }
 })

@@ -492,5 +492,32 @@
         "path": "%LOCALAPPDATA%\\lxss\\home\\timepp\\.bashrc",
         "marker": "/mnt/c/Users/idtong/OneDrive/softconf/mybash.sh",
         "content": ". \"/mnt/c/Users/idtong/OneDrive/softconf/mybash.sh\""
+    },
+    {
+        "id": "50c64c60-0877-450d-aa35-09eb6b01eba9",
+        "name": "Trips ff26",
+        "description": "Trips test tenant",
+        "tags": [
+            "MTO"
+        ],
+        "type": "url",
+        "url": "https://admin.microsoft.com/?login_hint=admin@a830edad9050849tLDX90cDJzRP.onmicrosoft.com",
+        "profile": "Profile 5"
+    },
+    {
+        "id": "c9cc4535-2817-4753-9340-57fdd962cfa7",
+        "name": "git config: alias lg",
+        "description": "config git for easier use",
+        "tags": [
+            "git"
+        ],
+        "type": "terminal",
+        "command": "git",
+        "args": [
+            "config",
+            "--global",
+            "alias.lg",
+            "log --color --graph --pretty=format:'%C(magenta)%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cd) %C(bold blue)<%an>%Creset' --abbrev-commit --date='format-local:%Y-%m-%d %H:%M'"
+        ]
     }
 ]

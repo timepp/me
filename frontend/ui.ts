@@ -2,10 +2,11 @@ import {
     api,
     type CommandConfig,
     type CommandDraft,
-    type CommandExecutionResult,
+    type CommandWithRunStats,
     type GetUserInput,
 } from '../api.ts'
-import { showOneAuthAccounts } from './components/one-auth-manager.ts'
+import { createRunHistoryDialogs } from './components/command-output.ts'
+import { CommandRunHistory } from './components/command-run-history.ts'
 import * as uu from './uu.ts'
 
 type CommandType = CommandDraft['type']
@@ -267,6 +268,7 @@ function commandDetails(
 }
 
 function hasStatus(command: CommandConfig): boolean {
+    if (command.type === 'powerShell') return Boolean(command.statusScript)
     return command.type === 'terminal' ? command.statusPort !== undefined : [
         'registry',
         'pathEntry',
@@ -274,7 +276,6 @@ function hasStatus(command: CommandConfig): boolean {
         'shortcut',
         'junction',
         'fileContent',
-        'powerShell',
     ].includes(command.type)
 }
 
@@ -293,7 +294,7 @@ function formatStatus(status: CachedStatus): string {
         ? '❌'
         : status === 'error'
         ? '⚠️'
-        : ''
+        : 'unknown'
 }
 
 function statusSortingValue(status: CachedStatus): number {
@@ -386,59 +387,55 @@ const getUserInput: GetUserInput = async (
     return value
 }
 
-async function showCommandResult(
-    result: CommandExecutionResult,
-): Promise<void> {
-    switch (result.type) {
-        case 'message': {
-            const content = document.createElement('div')
-            if (result.description) {
-                const description = document.createElement('p')
-                description.textContent = result.description
-                content.append(description)
-            }
-            const message = document.createElement('code')
-            message.textContent = result.content
-            content.append(message)
-            await uu.showInDialog(result.title, content)
-            return
-        }
-        case 'oneAuth':
-            await showOneAuthAccounts(result.accounts, result.title)
-            return
-        case 'status':
-            console.log(
-                `${result.title}: ${result.status.state}`,
-                result.status.message ?? '',
-            )
-    }
+type CommandCommonFields = Pick<CommandDraft, 'name' | 'description' | 'tags'>
+
+type CommandForm = {
+    content: HTMLElement
+    readDraft: (common: CommandCommonFields) => CommandDraft | null
 }
 
-async function showCommandDialog(
+function createCommandForm(
     type: CommandType,
     commands: CommandConfig[],
     initial?: CommandDraft,
     editingId?: string,
-): Promise<CommandDraft | null> {
-    if (isConfigurationCommandType(type)) {
-        return await showConfigurationCommandDialog(type, initial)
-    }
+): CommandForm {
     const content = document.createElement('div')
-    content.className = 'command-form'
+    content.className = 'command-type-fields'
 
-    const nameInput = createField('Name', initial?.name, { required: true })
-    const descriptionInput = createField('Description', initial?.description, {
-        multiline: true,
-    })
-    const tagsInput = createField(
-        'Tags (comma separated)',
-        initial?.tags?.join(', '),
-    )
-    content.append(
-        nameInput.parentElement!,
-        descriptionInput.parentElement!,
-        tagsInput.parentElement!,
-    )
+    if (isConfigurationCommandType(type)) {
+        const config: Partial<CommandDraft> = initial
+            ? structuredClone(initial)
+            : {}
+        delete config.name
+        delete config.description
+        delete config.tags
+        delete config.type
+        const configInput = createField(
+            'Type-specific JSON',
+            JSON.stringify(config, null, 4),
+            { required: true, multiline: true },
+        )
+        content.append(configInput.parentElement!)
+        return {
+            content,
+            readDraft: (common) => {
+                try {
+                    const value: unknown = JSON.parse(configInput.value)
+                    if (
+                        !value || typeof value !== 'object' ||
+                        Array.isArray(value)
+                    ) {
+                        throw new TypeError('Type-specific JSON must be an object.')
+                    }
+                    return { ...value, ...common, type } as CommandDraft
+                } catch (error) {
+                    alert(error instanceof Error ? error.message : String(error))
+                    return null
+                }
+            },
+        }
+    }
 
     let urlInput: HTMLInputElement | HTMLTextAreaElement | undefined
     let profileInput: HTMLInputElement | HTMLTextAreaElement | undefined
@@ -499,73 +496,6 @@ async function showCommandDialog(
         content.append(messageInput.parentElement!)
     }
 
-    async function showConfigurationCommandDialog(
-        type: CommandType,
-        initial?: CommandDraft,
-    ): Promise<CommandDraft | null> {
-        const content = document.createElement('div')
-        content.className = 'command-form'
-        const nameInput = createField('Name', initial?.name, { required: true })
-        const descriptionInput = createField(
-            'Description',
-            initial?.description,
-            { multiline: true },
-        )
-        const tagsInput = createField(
-            'Tags (comma separated)',
-            initial?.tags?.join(', '),
-        )
-        const config = initial ? structuredClone(initial) : { type }
-        delete (config as Partial<CommandDraft>).name
-        delete (config as Partial<CommandDraft>).description
-        delete (config as Partial<CommandDraft>).tags
-        delete (config as Partial<CommandDraft>).type
-        const configInput = createField(
-            'Type-specific JSON',
-            JSON.stringify(config, null, 4),
-            { required: true, multiline: true },
-        )
-        content.append(
-            nameInput.parentElement!,
-            descriptionInput.parentElement!,
-            tagsInput.parentElement!,
-            configInput.parentElement!,
-        )
-
-        let result: CommandDraft | null = null
-        await uu.showInDialog(
-            `${initial ? 'Edit' : 'Add'} ${type} command`,
-            content,
-            {
-                Save: () => {
-                    try {
-                        result = {
-                            ...JSON.parse(configInput.value),
-                            type,
-                            name: nameInput.value.trim(),
-                            description: descriptionInput.value.trim() ||
-                                undefined,
-                            tags: tagsInput.value.split(',').map((tag) =>
-                                tag.trim()
-                            )
-                                .filter(Boolean),
-                        }
-                        return true
-                    } catch (error) {
-                        alert(
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                        )
-                        return false
-                    }
-                },
-                Cancel: () => true,
-            },
-        )
-        return result
-    }
-
     const selectedCommandIds = new Set(
         initial?.type === 'compound' ? initial.subCommandIds : [],
     )
@@ -622,92 +552,183 @@ async function showCommandDialog(
         content.append(section)
     }
 
+    return {
+        content,
+        readDraft: (common) => {
+            switch (type) {
+                case 'url': {
+                    const url = urlInput!.value.trim()
+                    if (!url) {
+                        alert('URL is required.')
+                        return null
+                    }
+                    return {
+                        ...common,
+                        type,
+                        url,
+                        profile: profileInput!.value.trim() || undefined,
+                    }
+                }
+                case 'terminal': {
+                    const command = executableInput!.value.trim()
+                    const statusPortText = statusPortInput!.value.trim()
+                    const statusPort = statusPortText
+                        ? Number(statusPortText)
+                        : undefined
+                    if (
+                        !command ||
+                        (statusPort !== undefined &&
+                            (!Number.isInteger(statusPort) ||
+                                statusPort < 1 || statusPort > 65535))
+                    ) {
+                        alert('Executable and status port must be valid.')
+                        return null
+                    }
+                    return {
+                        ...common,
+                        type,
+                        command,
+                        args: argsInput!.value.split('\n').map((arg) =>
+                            arg.trim()
+                        ).filter(Boolean),
+                        statusPort,
+                    }
+                }
+                case 'code': {
+                    const path = pathInput!.value.trim()
+                    if (!path) {
+                        alert('Directory is required.')
+                        return null
+                    }
+                    return { ...common, type, path }
+                }
+                case 'message': {
+                    const message = messageInput!.value.trim()
+                    if (!message) {
+                        alert('Message is required.')
+                        return null
+                    }
+                    return { ...common, type, content: message }
+                }
+                case 'oneAuth':
+                    return { ...common, type }
+                case 'compound': {
+                    const mode = modeInput!.value
+                    if (mode !== 'all' && mode !== 'choose') {
+                        throw new TypeError(`Invalid compound run mode: ${mode}`)
+                    }
+                    return {
+                        ...common,
+                        type,
+                        mode,
+                        subCommandIds: commands
+                            .filter((command) =>
+                                selectedCommandIds.has(command.id)
+                            )
+                            .map((command) => command.id),
+                    }
+                }
+                default:
+                    throw new TypeError(`Unsupported command type: ${type}`)
+            }
+        },
+    }
+}
+
+async function showCommandDialog(
+    type: CommandType,
+    commands: CommandConfig[],
+    initial?: CommandDraft,
+    editingId?: string,
+): Promise<CommandDraft | null> {
+    const content = document.createElement('div')
+    content.className = initial ? 'command-editor' : 'command-editor-layout'
+    const form = document.createElement('div')
+    form.className = 'command-form'
+    const nameInput = createField('Name', initial?.name, { required: true })
+    const descriptionInput = createField('Description', initial?.description, {
+        multiline: true,
+    })
+    const tagsInput = createField(
+        'Tags (comma separated)',
+        initial?.tags?.join(', '),
+    )
+    const fields = document.createElement('div')
+    form.append(
+        nameInput.parentElement!,
+        descriptionInput.parentElement!,
+        tagsInput.parentElement!,
+        fields,
+    )
+    const forms = new Map<CommandType, CommandForm>()
+    let selectedForm: CommandForm
+    const buttons = new Map<CommandType, HTMLButtonElement>()
+    const selectType = (selectedType: CommandType) => {
+        let selected = forms.get(selectedType)
+        if (!selected) {
+            selected = createCommandForm(
+                selectedType,
+                commands,
+                initial,
+                editingId,
+            )
+            forms.set(selectedType, selected)
+        }
+        selectedForm = selected
+        fields.replaceChildren(selected.content)
+        for (const [buttonType, button] of buttons) {
+            const active = buttonType === selectedType
+            button.classList.toggle('active', active)
+            button.setAttribute('aria-pressed', String(active))
+        }
+    }
+    if (!initial) {
+        const navigation = document.createElement('nav')
+        navigation.className = 'command-type-navigation'
+        navigation.setAttribute('aria-label', 'Command type')
+        for (const commandType of commandTypes) {
+            const button = createButton(
+                commandType,
+                () => selectType(commandType),
+            )
+            buttons.set(commandType, button)
+            navigation.append(button)
+        }
+        content.append(navigation)
+    }
+    content.append(form)
+    selectType(type)
+
     let result: CommandDraft | null = null
-    await uu.showInDialog(
-        `${initial ? 'Edit' : 'Add'} ${type} command`,
+    await uu.showDialog(
+        initial ? `Edit ${type} command` : 'Add command',
         content,
         {
-            Save: () => {
-                const name = nameInput.value.trim()
-                if (!name) {
-                    alert('Please fill in all required fields.')
-                    return false
-                }
-                const common = {
-                    name,
-                    description: descriptionInput.value.trim() || undefined,
-                    tags: tagsInput.value.split(',').map((tag) => tag.trim())
-                        .filter(Boolean),
-                }
-                switch (type) {
-                    case 'url': {
-                        const url = urlInput!.value.trim()
-                        if (!url) return false
-                        result = {
-                            ...common,
-                            type,
-                            url,
-                            profile: profileInput!.value.trim() || undefined,
-                        }
-                        break
+            classes: ['command-editor-dialog'],
+            softDismissable: false,
+            actions: {
+                Save: () => {
+                    const name = nameInput.value.trim()
+                    if (!name) {
+                        alert('Please fill in all required fields.')
+                        return false
                     }
-                    case 'terminal': {
-                        const command = executableInput!.value.trim()
-                        const statusPortText = statusPortInput!.value.trim()
-                        const statusPort = statusPortText
-                            ? Number(statusPortText)
-                            : undefined
-                        if (
-                            !command ||
-                            (statusPort !== undefined &&
-                                (!Number.isInteger(statusPort) ||
-                                    statusPort < 1 || statusPort > 65535))
-                        ) {
-                            alert('Executable and status port must be valid.')
-                            return false
-                        }
-                        result = {
-                            ...common,
-                            type,
-                            command,
-                            args: argsInput!.value.split('\n').map((arg) =>
-                                arg.trim()
-                            ).filter(Boolean),
-                            statusPort,
-                        }
-                        break
-                    }
-                    case 'code': {
-                        const path = pathInput!.value.trim()
-                        if (!path) return false
-                        result = { ...common, type, path }
-                        break
-                    }
-                    case 'message': {
-                        const message = messageInput!.value.trim()
-                        if (!message) return false
-                        result = { ...common, type, content: message }
-                        break
-                    }
-                    case 'oneAuth':
-                        result = { ...common, type }
-                        break
-                    case 'compound':
-                        result = {
-                            ...common,
-                            type,
-                            mode: modeInput!.value as 'all' | 'choose',
-                            subCommandIds: commands
-                                .filter((command) =>
-                                    selectedCommandIds.has(command.id)
-                                )
-                                .map((command) => command.id),
-                        }
-                        break
-                }
-                return true
+                    result = selectedForm.readDraft({
+                        name,
+                        description: descriptionInput.value.trim() || undefined,
+                        tags: tagsInput.value.split(',').map((tag) =>
+                            tag.trim()
+                        ).filter(Boolean),
+                    })
+                    return result !== null
+                },
+                Cancel: () => true,
             },
-            Cancel: () => true,
+        },
+        ({ dialog }) => {
+            queueMicrotask(() => {
+                dialog.style.height = 'fit-content'
+            })
         },
     )
     return result
@@ -722,9 +743,12 @@ async function main(): Promise<void> {
     const toolbar = document.createElement('div')
     toolbar.className = 'command-toolbar'
     root.append(toolbar)
+    const history = new CommandRunHistory()
+    const dialogs = createRunHistoryDialogs(history)
+    toolbar.append(createButton('Run History', () => dialogs.showHistory()))
     let visualization: HTMLElement | undefined
     const statusCache = new Map<string, CachedStatus>()
-    let commands: CommandConfig[] = []
+    let commands: CommandWithRunStats[] = []
     let commandsById = new Map<string, CommandConfig>()
     let loadGeneration = 0
 
@@ -733,34 +757,39 @@ async function main(): Promise<void> {
             const results = await api.runConfiguredCommand(
                 command.id,
                 getUserInput,
+                undefined,
+                summary => {
+                    const record = history.accept(summary)
+                    void dialogs.showRun(record).catch((error) => {
+                        alert(error instanceof Error ? error.message : String(error))
+                    })
+                    return loadCommands().catch(error => {
+                        alert(error instanceof Error ? error.message : String(error))
+                    })
+                },
             )
-            for (const result of results) await showCommandResult(result)
             const statusResult = results.find((result) =>
                 result.type === 'status' && result.commandId === command.id
             )
-            if (statusResult?.type === 'status') {
+            if (hasStatus(command) && statusResult?.type === 'status') {
                 statusCache.set(command.id, statusResult.status.state)
                 renderVisualization()
             } else if (hasStatus(command)) {
                 await refreshStatus(command)
             }
         } catch (error) {
-            alert(
-                `Failed to run command: ${
-                    error instanceof Error ? error.message : String(error)
-                }`,
-            )
+            alert(error instanceof Error ? error.message : String(error))
         }
     }
     const renderVisualization = () => {
         const rows = commands.map((command) => ({
             ...command,
-            status: statusCache.get(command.id) ?? 'unknown',
+            ...(hasStatus(command)
+                ? { status: statusCache.get(command.id) ?? 'unknown' }
+                : {}),
         }))
         const table = uu.visualizeArray(rows, {
             renderStyles: ['table', 'tile'],
-            getSortingValue: (item, prop) =>
-                prop === 'status' ? statusSortingValue(item.status) : undefined,
             renderOption: {
                 props: [
                     'type',
@@ -768,6 +797,8 @@ async function main(): Promise<void> {
                     'description',
                     'tags',
                     'details',
+                    'runcount',
+                    'lastrun',
                     'status',
                 ],
                 propOptions: {
@@ -777,23 +808,13 @@ async function main(): Promise<void> {
                     tags: {
                         formatter: (item) => item.tags?.join(', ') ?? '',
                     },
-                    status: {
-                        formatter: (item) => {
-                            const element = document.createElement('span')
-                            updateStatusElement(element, item.status)
-                            return element
-                        },
-                    },
-                },
-                onItemClick: async (item) => {
-                    await run(item)
-                    return true
-                },
+                }
             },
             itemActions: (item) => {
                 const actions: uu.ItemActions = {
-                    Run: async () => await run(item),
-                    Edit: async () => {
+                    '▶️': async () => await run(item),
+                    '🕘': () => dialogs.showHistory(item.id),
+                    '✏️': async () => {
                         const draft = await showCommandDialog(
                             item.type,
                             commands,
@@ -814,7 +835,7 @@ async function main(): Promise<void> {
                             )
                         }
                     },
-                    Delete: async () => {
+                    '🗑️': async () => {
                         if (!confirm(`Delete command "${item.name}"?`)) return
                         try {
                             await api.deleteCommand(item.id)
@@ -831,7 +852,7 @@ async function main(): Promise<void> {
                     },
                 }
                 if (hasStatus(item)) {
-                    actions['Refresh Status'] = async () => {
+                    actions['🔄'] = async () => {
                         await refreshStatus(item)
                     }
                 }
@@ -856,65 +877,80 @@ async function main(): Promise<void> {
     }
 
     const refreshAllStatuses = async (generation: number): Promise<void> => {
-        const commandSnapshot = [...commands]
+        const commandSnapshot = commands.filter(hasStatus)
+        for (const command of commandSnapshot) {
+            statusCache.set(command.id, 'refreshing')
+        }
+        renderVisualization()
         const statuses = await mapWithConcurrency(
             commandSnapshot,
             5,
             async (command): Promise<[string, CachedStatus]> => {
-                if (!hasStatus(command)) return [command.id, 'unknown']
                 try {
                     return [command.id, await getCommandStatus(command)]
-                } catch {
+                } catch (error) {
+                    console.error(`Failed to check status for "${command.name}":`, error)
                     return [command.id, 'error']
                 }
             },
         )
         if (generation !== loadGeneration) return
-        statusCache.clear()
         for (const [id, status] of statuses) statusCache.set(id, status)
         renderVisualization()
     }
 
-    const loadCommands = async (refreshStatuses = false): Promise<void> => {
-        const generation = ++loadGeneration
+    const loadCommands = async (): Promise<void> => {
+        ++loadGeneration
         commands = await api.getCommands()
         commandsById = new Map(commands.map((command) => [command.id, command]))
         const previousStatuses = new Map(statusCache)
         statusCache.clear()
         for (const command of commands) {
+            if (!hasStatus(command)) continue
             const previousStatus = previousStatuses.get(command.id)
             statusCache.set(
                 command.id,
-                refreshStatuses && hasStatus(command)
-                    ? 'refreshing'
-                    : previousStatus === 'refreshing'
+                previousStatus === 'refreshing'
                     ? 'unknown'
                     : previousStatus ?? 'unknown',
             )
         }
         renderVisualization()
-        if (refreshStatuses) void refreshAllStatuses(generation)
     }
 
-    for (const type of commandTypes) {
-        toolbar.append(createButton(`Add ${type}`, async () => {
-            const draft = await showCommandDialog(type, commands)
-            if (!draft) return
-            try {
-                await api.addCommand(draft)
-                await loadCommands()
-            } catch (error) {
-                alert(
-                    `Failed to add command: ${
-                        error instanceof Error ? error.message : String(error)
-                    }`,
-                )
-            }
-        }))
-    }
+    const checkStatusesButton = createButton('Check All Statuses', async () => {
+        checkStatusesButton.disabled = true
+        try {
+            await refreshAllStatuses(loadGeneration)
+        } catch (error) {
+            alert(
+                `Failed to check statuses: ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+            )
+        } finally {
+            checkStatusesButton.disabled = false
+        }
+    })
+    toolbar.append(checkStatusesButton)
+
+    toolbar.append(createButton('Add command', async () => {
+        const draft = await showCommandDialog('url', commands)
+        if (!draft) return
+        try {
+            await api.addCommand(draft)
+            await loadCommands()
+        } catch (error) {
+            alert(
+                `Failed to add command: ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+            )
+        }
+    }))
 
     try {
-        await loadCommands(true)
+        await loadCommands()
     } catch (error) {
         root.textContent = `Failed to load commands: ${
             error instanceof Error ? error.message : String(error)

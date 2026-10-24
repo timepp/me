@@ -23,8 +23,7 @@ export async function executeCommand(
             await runUrlCommand(command)
             return []
         case 'terminal':
-            await runTerminalCommand(command)
-            return []
+            return [await runTerminalCommand(command, context.onCommandEvent)]
         case 'code':
             await runCodeCommand(command)
             return []

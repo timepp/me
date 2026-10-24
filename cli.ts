@@ -2,6 +2,7 @@ import type {
     CommandConfig,
     CommandExecutionResult,
     GetUserInput,
+    OnCommandEvent,
     OneAuthInfo,
 } from './api.ts'
 import { apiImpl } from './api-impl.ts'
@@ -95,6 +96,9 @@ const getUserInput: GetUserInput = (
 
 function showCommandResult(result: CommandExecutionResult): void {
     switch (result.type) {
+        case 'terminal':
+            console.log(`\n${result.title}: exited with code ${result.code}`)
+            return
         case 'message':
             console.log(`\n${result.title}`)
             if (result.description) console.log(result.description)
@@ -138,7 +142,21 @@ function showInlineCommands(commands: CommandConfig[]): void {
 }
 
 async function executeCommand(commandId: string): Promise<void> {
-    const results = await apiImpl.runConfiguredCommand(commandId, getUserInput)
+    const onCommandEvent: OnCommandEvent = async (event) => {
+        if (event.type === 'stdout' || event.type === 'stderr') {
+            const stream = event.type === 'stdout' ? Deno.stdout : Deno.stderr
+            const data = new TextEncoder().encode(event.data)
+            let offset = 0
+            while (offset < data.length) {
+                offset += await stream.write(data.subarray(offset))
+            }
+        }
+    }
+    const results = await apiImpl.runConfiguredCommand(
+        commandId,
+        getUserInput,
+        onCommandEvent,
+    )
     results.forEach(showCommandResult)
 }
 

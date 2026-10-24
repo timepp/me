@@ -1,19 +1,34 @@
 import { createClient } from "@timepp/dui/client"
 import type {
-    CommandConfig,
     CommandDraft,
     CommandExecutionResult,
     CommandStatus,
+    CommandWithRunStats,
     GetUserInput,
+    OnCommandEvent,
 } from './command.ts'
 import type { OneAuthInfo } from './lib/oneauth.ts'
+import type {
+    CommandRunRecord,
+    CommandRunSummary,
+    OnCommandRunStarted,
+} from './command-history-types.ts'
+export type {
+    CommandRunRecord,
+    CommandRunSummary,
+    OnCommandRunStarted,
+} from './command-history-types.ts'
 
 export type {
+    CommandEvent,
     CommandConfig,
     CommandDraft,
     CommandExecutionResult,
     CommandStatus,
+    CommandWithRunStats,
     GetUserInput,
+    OnCommandEvent,
+    TerminalCommandResult,
 } from './command.ts'
 export type { OneAuthInfo } from './lib/oneauth.ts'
 
@@ -38,14 +53,18 @@ export type PortInfo = {
 }
 
 export interface BackendAPI {
-    getCommands(): Promise<CommandConfig[]>
-    addCommand(command: CommandDraft): Promise<CommandConfig>
-    updateCommand(id: string, command: CommandDraft): Promise<CommandConfig>
+    getCommands(): Promise<CommandWithRunStats[]>
+    addCommand(command: CommandDraft): Promise<CommandWithRunStats>
+    updateCommand(id: string, command: CommandDraft): Promise<CommandWithRunStats>
     deleteCommand(id: string): Promise<void>
     runConfiguredCommand(
         id: string,
         getUserInput: GetUserInput,
+        onCommandEvent?: OnCommandEvent,
+        onRunStarted?: OnCommandRunStarted,
     ): Promise<CommandExecutionResult[]>
+    getCommandRunHistory(commandId?: string): Promise<CommandRunSummary[]>
+    getCommandRun(id: string): Promise<CommandRunRecord>
     getCommandStatus(id: string): Promise<CommandStatus>
 
     getNetworkInfo(name: string): Promise<NetworkInfo[]>

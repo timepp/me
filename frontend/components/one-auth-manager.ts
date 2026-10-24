@@ -12,7 +12,7 @@ export async function showOneAuthAccounts(
             renderStyles: ['table', 'tile'],
             stateKey: 'OneAuthAccounts',
             itemActions: {
-                Delete: async function (item: { id: string }) {
+                '🗑️': async function (item: { id: string }) {
                     const confirmed = confirm(
                         `Are you sure you want to delete the OneAuth account with ID: ${item.id}?`,
                     )

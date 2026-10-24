@@ -10,8 +10,10 @@ export const apiImpl: BackendAPI = {
     addCommand: command => commandManager.addCommand(command),
     updateCommand: (id, command) => commandManager.updateCommand(id, command),
     deleteCommand: id => commandManager.deleteCommand(id),
-    runConfiguredCommand: (id, getUserInput) =>
-        commandManager.runCommand(id, getUserInput),
+    runConfiguredCommand: (id, getUserInput, onCommandEvent, onRunStarted) =>
+        commandManager.runCommand(id, getUserInput, onCommandEvent, onRunStarted),
+    getCommandRunHistory: async commandId => commandManager.getCommandRunHistory(commandId),
+    getCommandRun: async id => commandManager.getCommandRun(id),
     getCommandStatus: id => commandManager.getCommandStatus(id),
     getMyselfDir: async function () {
         const myPath = new URL(import.meta.url).pathname
