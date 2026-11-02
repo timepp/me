@@ -9,7 +9,8 @@
   },
   "lock": false,
   "tasks": {
-    "cli": "deno run -A cli.ts"
+    "cli": "deno run -A cli.ts",
+    "app": "deno run -A app.ts"
   },
   "minimumDependencyAge": 0,
   "compilerOptions": {
