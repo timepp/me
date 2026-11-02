@@ -274,51 +274,6 @@
         ]
     },
     {
-        "id": "1d6aacc2-7070-4210-b9a1-8bdd745c40ed",
-        "name": "Autostart handyrun",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "scheduledTask",
-        "taskName": "handyrun",
-        "executable": "C:\\cloud\\soft\\handyrun2\\handyrun.exe",
-        "args": [],
-        "runLevel": "normal"
-    },
-    {
-        "id": "f8e99898-9638-4a4b-89b0-80e5e8294971",
-        "name": "Autostart autoit",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "scheduledTask",
-        "taskName": "autoit",
-        "executable": "C:\\cloud\\soft\\autoit\\autoit3.exe",
-        "args": [
-            "C:\\cloud\\softconf\\hotkey.au3"
-        ],
-        "runLevel": "normal"
-    },
-    {
-        "id": "af5f942a-fd9d-4ed1-bc19-01af1ff9383e",
-        "name": "Legacy development PATH entries",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "pathEntry",
-        "elevated": true,
-        "entries": [
-            "C:\\cloud\\soft\\cmdline",
-            "C:\\cloud\\soft\\texmfs\\install\\miktex\\bin",
-            "C:\\cloud\\soft\\dmd2\\windows\\bin",
-            "C:\\cloud\\soft\\sdtools",
-            "C:\\cloud\\soft\\sdtools\\sdpack\\bin"
-        ]
-    },
-    {
         "id": "609eee93-ca1b-4811-9c2c-b7c9329a8daf",
         "name": "Explorer view settings",
         "tags": [
@@ -368,45 +323,6 @@
         "statusScript": "Write-Output (Test-Path -LiteralPath 'Registry::HKEY_CLASSES_ROOT\\*\\shellex\\ContextMenuHandlers\\7-Zip')"
     },
     {
-        "id": "dacad31c-7c9a-4911-aab8-2dbfe562890f",
-        "name": "Disable shell hotkeys",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "registry",
-        "values": [
-            {
-                "key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-                "name": "DisabledHotKeys",
-                "value": "awq"
-            }
-        ]
-    },
-    {
-        "id": "81f4ea57-9fe2-4619-994c-fe1c6bbdf022",
-        "name": "Register ORG files",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "registry",
-        "values": [
-            {
-                "key": "HKCU\\Software\\Classes\\EmacsClient\\shell\\open\\command",
-                "value": "wscript.exe C:\\cloud\\soft\\emacs\\emacs.wsf -n -- \"%1\""
-            },
-            {
-                "key": "HKCU\\Software\\Classes\\.org",
-                "value": "EmacsClient"
-            },
-            {
-                "key": "HKCU\\Software\\Classes\\EmacsClient\\DefaultIcon",
-                "value": "C:\\cloud\\soft\\emacs\\bin\\emacs.exe"
-            }
-        ]
-    },
-    {
         "id": "95b33f4c-54b5-4b65-a4e1-24dcc393933b",
         "name": "Disable automatic folder type discovery",
         "tags": [
@@ -416,18 +332,6 @@
         "type": "powerShell",
         "applyScript": "$root = 'Registry::HKEY_CURRENT_USER\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell'; Remove-Item -LiteralPath \"$root\\BagMRU\" -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -LiteralPath \"$root\\Bags\" -Recurse -Force -ErrorAction SilentlyContinue; New-Item -Path \"$root\\Bags\\AllFolders\\Shell\" -Force | Out-Null; New-ItemProperty -Path \"$root\\Bags\\AllFolders\\Shell\" -Name FolderType -Value NotSpecified -PropertyType String -Force | Out-Null; New-ItemProperty -Path $root -Name 'BagMRU Size' -Value 10000 -PropertyType DWord -Force | Out-Null",
         "statusScript": "$root = 'Registry::HKEY_CURRENT_USER\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell'; $type = (Get-ItemProperty -LiteralPath \"$root\\Bags\\AllFolders\\Shell\" -Name FolderType -ErrorAction SilentlyContinue).FolderType; Write-Output ((-not (Test-Path -LiteralPath \"$root\\BagMRU\")) -and $type -eq 'NotSpecified')"
-    },
-    {
-        "id": "c5244f0f-ff3c-4783-9b1d-42146b15bfad",
-        "name": "Map C:\\cloud to OneDrive",
-        "tags": [
-            "configuration",
-            "myenv"
-        ],
-        "type": "junction",
-        "elevated": true,
-        "path": "C:\\cloud",
-        "target": "%USERPROFILE%\\OneDrive"
     },
     {
         "id": "5da6ca35-b828-48b7-9a67-0a1e16292625",
@@ -503,5 +407,41 @@
         "type": "url",
         "url": "https://admin.microsoft.com/?login_hint=admin@a830edad9050849tLDX90cDJzRP.onmicrosoft.com",
         "profile": "Profile 5"
+    },
+    {
+        "id": "c9cc4535-2817-4753-9340-57fdd962cfa7",
+        "name": "git config: alias lg",
+        "description": "config git for easier use",
+        "tags": [
+            "git"
+        ],
+        "type": "terminal",
+        "command": "git",
+        "args": [
+            "config",
+            "--global",
+            "alias.lg",
+            "log --color --graph --pretty=format:'%C(magenta)%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cd) %C(bold blue)<%an>%Creset' --abbrev-commit --date='format-local:%Y-%m-%d %H:%M'"
+        ]
+    },
+    {
+        "id": "e01ca509-0f25-4e31-923b-f5ffbaa1f5c2",
+        "name": "环境配置Prompt文件",
+        "description": "只描述要达到的效果，让agent来进行配置，\n这是新一代的互操作模式，完全颠覆了原先的软件开发模式；同时也吃掉了本产品的一部分优势。\nme仍然具有的优势：agent不可用时；轻量的task比如使用特定browser profile代开链接；一个有价值命令的备忘录",
+        "tags": [
+            "configuration"
+        ],
+        "type": "code",
+        "path": "%ONEDRIVE%\\SKILLS\\new-machine-setup.md"
+    },
+    {
+        "id": "9d3870fc-bec4-4fc3-b8c1-b5a5d1da73a9",
+        "name": "Test Tenant Trips Portal",
+        "tags": [
+            "tenant",
+            "bookmark"
+        ],
+        "type": "url",
+        "url": "https://tdff5prd.office.net/"
     }
 ]

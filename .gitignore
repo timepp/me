@@ -1,3 +1,6 @@
 /frontend/dist
 /node_modules
 /frontend/.vite/
+command-history.sqlite
+command-history.sqlite-wal
+command-history.sqlite-shm

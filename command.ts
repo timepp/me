@@ -1,9 +1,22 @@
 import { executeCommand } from './commands/execute-command.ts'
+import { dirname, resolve } from 'node:path'
+import { CommandHistoryStore } from './command-history.ts'
+import type { CommandRunStats, OnCommandRunStarted } from './command-history-types.ts'
 import { getCommandStatus } from './commands/get-command-status.ts'
 import type { CommandStatus } from './commands/status.ts'
-import type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
+import type {
+    CommandExecutionResult,
+    GetUserInput,
+    OnCommandEvent,
+} from './commands/types.ts'
 
-export type { CommandExecutionResult, GetUserInput } from './commands/types.ts'
+export type {
+    CommandEvent,
+    CommandExecutionResult,
+    GetUserInput,
+    OnCommandEvent,
+    TerminalCommandResult,
+} from './commands/types.ts'
 export type { CommandStatus } from './commands/status.ts'
 
 export type CommandType =
@@ -132,6 +145,8 @@ export type CommandConfig =
 
 type CommandDraftBase = Omit<CommandBase, 'id'>
 
+export type CommandWithRunStats = CommandConfig & CommandRunStats
+
 export type UrlCommandDraft = CommandDraftBase & {
     type: 'url'
     url: string
@@ -190,30 +205,48 @@ export type CommandDraft =
 
 export class CommandManager {
     private mutationQueue: Promise<void> = Promise.resolve()
+    private readonly history: CommandHistoryStore
 
     constructor(
         private readonly configUrl: string | URL = new URL(
             './commands.json',
             import.meta.url,
         ),
-    ) {}
-
-    async getCommands(): Promise<CommandConfig[]> {
-        return await this.readCommands()
+        historyPath: string | URL = configUrl instanceof URL
+            ? new URL('./command-history.sqlite', configUrl)
+            : resolve(dirname(configUrl), 'command-history.sqlite'),
+    ) {
+        this.history = new CommandHistoryStore(historyPath)
     }
 
-    async addCommand(draft: CommandDraft): Promise<CommandConfig> {
+    getCommandRunHistory(commandId?: string) {
+        return this.history.list(commandId)
+    }
+
+    getCommandRun(id: string) {
+        return this.history.get(id)
+    }
+
+    close(): void {
+        this.history.close()
+    }
+
+    async getCommands(): Promise<CommandWithRunStats[]> {
+        return this.withRunStats(await this.readCommands())
+    }
+
+    async addCommand(draft: CommandDraft): Promise<CommandWithRunStats> {
         const command = commandFromDraft(parseCommandDraft(draft))
         await this.mutate((commands) => {
             commands.push(command)
         })
-        return structuredClone(command)
+        return this.withRunStats([command])[0]
     }
 
     async updateCommand(
         id: string,
         draft: CommandDraft,
-    ): Promise<CommandConfig> {
+    ): Promise<CommandWithRunStats> {
         const parsedId = requireGuid(id, 'id')
         const command = commandFromDraft(parseCommandDraft(draft), parsedId)
         await this.mutate((commands) => {
@@ -221,7 +254,15 @@ export class CommandManager {
             if (index === -1) throw new Error(`Command not found: ${parsedId}`)
             commands[index] = command
         })
-        return structuredClone(command)
+        return this.withRunStats([command])[0]
+    }
+
+    private withRunStats(commands: CommandConfig[]): CommandWithRunStats[] {
+        const stats = this.history.getRunStats()
+        return commands.map(command => ({
+            ...command,
+            ...(stats.get(command.id) ?? { runcount: 0, lastrun: null }),
+        }))
     }
 
     async deleteCommand(id: string): Promise<void> {
@@ -245,24 +286,60 @@ export class CommandManager {
     async runCommand(
         id: string,
         getUserInput: GetUserInput,
+        onCommandEvent?: OnCommandEvent,
+        onRunStarted?: OnCommandRunStarted,
     ): Promise<CommandExecutionResult[]> {
         const parsedId = requireGuid(id, 'id')
         const commands = await this.readCommands()
         const commandsById = new Map(
             commands.map((command) => [command.id, command]),
         )
+        const command = commandsById.get(parsedId)
+        if (!command) throw new Error(`Command not found: ${parsedId}`)
+        const run = this.history.start(command)
+        if (onRunStarted) {
+            try {
+                await onRunStarted(run)
+            } catch (error) {
+                console.error('Failed to notify client of command run:', error)
+            }
+        }
+        let forwardEvent = onCommandEvent
+        const recordEvent: OnCommandEvent = async event => {
+            this.history.appendEvent(run.id, event)
+            if (forwardEvent) {
+                try {
+                    await forwardEvent(event)
+                } catch (error) {
+                    console.error('Command output client disconnected:', error)
+                    forwardEvent = undefined
+                }
+            }
+        }
         const runCommandById = async (
             commandId: string,
         ): Promise<CommandExecutionResult[]> => {
             const command = commandsById.get(commandId)
             if (!command) throw new Error(`Command not found: ${commandId}`)
-            return await executeCommand(command, {
+            const results = await executeCommand(command, {
                 getUserInput,
+                onCommandEvent: recordEvent,
                 runCommandById,
                 commandsById,
             })
+            if (command.type !== 'compound' && results.length) {
+                this.history.appendResults(run.id, results)
+            }
+            return results
         }
-        return await runCommandById(parsedId)
+        try {
+            const results = await runCommandById(parsedId)
+            this.history.complete(run.id, results)
+            return results
+        } catch (error) {
+            this.history.fail(run.id, error)
+            throw error
+        }
     }
 
     async getCommandStatus(id: string): Promise<CommandStatus> {

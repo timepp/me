@@ -1,5 +1,5 @@
 html {
-    font-size: clamp(10px, 1vw, 18px);
+    font-size: clamp(10px, 0.875vw, 14px);
 }
 body {
     font-family: Arial, sans-serif;
@@ -38,7 +38,7 @@ table th, table td {
 }
 
 .command-manager {
-    padding: 1rem;
+    padding: 0.75rem;
 }
 
 .command-toolbar {
@@ -50,13 +50,48 @@ table th, table td {
 
 .command-form {
     display: grid;
-    gap: 0.75rem;
+    gap: 0.5rem;
     min-width: min(32rem, 75vw);
+}
+
+.command-editor-dialog {
+    width: min(64rem, 94vw);
+    max-width: 94vw;
+    max-height: 90dvh;
+}
+
+.command-editor-layout {
+    display: grid;
+    grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+}
+
+.command-editor-dialog .command-form {
+    min-width: 0;
+}
+
+.command-type-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    position: sticky;
+    top: 0;
+}
+
+.command-type-navigation .btn {
+    text-align: left;
+}
+
+.command-type-fields {
+    display: grid;
+    gap: 0.5rem;
 }
 
 .command-form-field {
     display: grid;
     gap: 0.25rem;
+    min-width: 0;
 }
 
 .command-form-field textarea {
@@ -89,4 +124,64 @@ table th, table td {
 
 .sub-command-actions .btn {
     padding: 0.2rem 0.5rem;
+}
+
+.command-outputs {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.command-output-panel {
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+}
+
+.command-output-panel h2 {
+    font-size: 1.25rem;
+}
+
+.command-output-panel h3 {
+    font-size: 1rem;
+}
+
+.command-output-text {
+    background: #f8f9fa;
+    max-height: 18rem;
+    overflow: auto;
+    overflow-wrap: anywhere;
+    padding: 0.5rem;
+    white-space: pre-wrap;
+}
+
+.command-run-dialog {
+    width: min(64rem, 90vw);
+    max-width: 90vw;
+}
+
+.command-run-output-dialog {
+    min-height: min(28rem, 80dvh);
+    max-height: 90dvh;
+}
+
+.command-run-view,
+.command-run-history {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.command-run-state {
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .command-editor-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .command-type-navigation {
+        flex-direction: row;
+        flex-wrap: wrap;
+        position: static;
+    }
 }
