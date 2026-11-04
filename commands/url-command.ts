@@ -12,8 +12,15 @@ export async function runUrlCommand(
         return
     }
 
+    if (/["\r\n]/.test(command.url)) {
+        throw new Error('URL must not contain double quotes or line breaks.')
+    }
+
     const output = await new Deno.Command('cmd', {
-        args: ['/c', 'start', '', command.url],
+        // Expand once so URL percent escapes remain literal; disable ! expansion.
+        args: ['/d', '/v:off', '/c', 'start', '""', '"%ME_COMMAND_URL%"'],
+        env: { ME_COMMAND_URL: command.url },
+        windowsRawArguments: true,
         stdout: 'piped',
         stderr: 'piped',
     }).output()

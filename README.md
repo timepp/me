@@ -23,6 +23,10 @@ Windows configuration command types include:
 - `fileContent`
 - `powerShell`
 
+URL commands without a Chrome profile open in the default browser using Windows
+`start`. Query separators and percent-encoded characters are preserved. Literal
+double quotes and line breaks must be URL-encoded.
+
 Set `elevated` to `true` when applying a command requires UAC elevation.
 Status checks do not elevate.
 

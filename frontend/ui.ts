@@ -808,13 +808,24 @@ async function main(): Promise<void> {
                     tags: {
                         formatter: (item) => item.tags?.join(', ') ?? '',
                     },
-                }
+                    name: {
+                        formatter: (item) => {
+                            const a = uu.createElement(null, 'a', [], item.name, {}, {href: '#'})
+                            a.onclick = () => run(item)
+                            return a
+                        },
+                    },
+                },
+            },
+            tileRenderOption: {
+                hidePropName: true,
+                header: item => uu.createHeader(uu.stringToColor(item.name, 50, 80))
             },
             itemActions: (item) => {
                 const actions: uu.ItemActions = {
-                    '▶️': async () => await run(item),
-                    '🕘': () => dialogs.showHistory(item.id),
-                    '✏️': async () => {
+                    'Run': async () => await run(item),
+                    'History': () => dialogs.showHistory(item.id),
+                    'Edit': async () => {
                         const draft = await showCommandDialog(
                             item.type,
                             commands,
@@ -835,7 +846,7 @@ async function main(): Promise<void> {
                             )
                         }
                     },
-                    '🗑️': async () => {
+                    'Delete': async () => {
                         if (!confirm(`Delete command "${item.name}"?`)) return
                         try {
                             await api.deleteCommand(item.id)
@@ -852,7 +863,7 @@ async function main(): Promise<void> {
                     },
                 }
                 if (hasStatus(item)) {
-                    actions['🔄'] = async () => {
+                    actions['Refresh'] = async () => {
                         await refreshStatus(item)
                     }
                 }
